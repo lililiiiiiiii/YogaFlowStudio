@@ -137,9 +137,15 @@
           </div>
           <p id="modal-sanskrit-name" class="text-xs text-amber-800 italic font-serif mt-0.5">Sanskrit Name</p>
         </div>
-        <button id="modal-close-btn" class="p-2 text-stone-400 hover:text-stone-700 rounded-full">
-          <i class="ph ph-x text-lg"></i>
-        </button>
+        <div class="flex items-center gap-1">
+          <!-- 補回語音試聽按鈕 -->
+          <button id="modal-voice-btn" class="p-2 text-stone-500 hover:text-amber-700 rounded-full" title="試聽語音 (Listen)">
+            <i class="ph-fill ph-speaker-high text-lg"></i>
+          </button>
+          <button id="modal-close-btn" class="p-2 text-stone-400 hover:text-stone-700 rounded-full">
+            <i class="ph ph-x text-lg"></i>
+          </button>
+        </div>
       </div>
 
       <div class="p-4 overflow-y-auto space-y-3 custom-scroll text-xs leading-relaxed">
@@ -192,11 +198,9 @@
 
     <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
       <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-base tracking-wider mb-0.5">Sanskrit</span>
-      <!-- 中文名稱作為主要大字，英文名稱作為緊隨副標 -->
       <h2 id="player-pose-title-zh" class="text-3xl font-extrabold text-white mb-0.5 tracking-tight">體位中文名</h2>
       <p id="player-pose-title-en" class="text-amber-200/90 text-sm font-medium mb-3">English Pose Name • Side</p>
 
-      <!-- 圓形倒數計時器 -->
       <div class="relative w-44 h-44 flex items-center justify-center my-3">
         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="44" stroke="#292524" stroke-width="6" fill="transparent" />
@@ -208,7 +212,6 @@
         </div>
       </div>
 
-      <!-- 雙語口令展示卡 -->
       <div class="bg-stone-900/95 border border-stone-800 rounded-xl p-3.5 mt-2 w-full text-xs leading-relaxed min-h-[85px] flex flex-col justify-center space-y-1.5 text-left">
         <p id="player-cues-zh" class="text-stone-200 font-normal"><strong class="text-amber-400 mr-1">【中】</strong>中文引導口令載入中...</p>
         <p id="player-cues-en" class="text-stone-400 font-serif italic text-[11px] border-t border-stone-800/80 pt-1"><strong class="text-amber-500 mr-1 not-italic font-sans">【EN】</strong>English cue text...</p>
@@ -220,7 +223,6 @@
       </div>
     </div>
 
-    <!-- 播放器控制列 -->
     <div class="p-5 border-t border-stone-800 flex items-center justify-center gap-8 shrink-0 bg-stone-950 pb-8">
       <button id="player-prev-btn" class="p-3 bg-stone-900 text-stone-300 rounded-full active:scale-90 transition">
         <i class="ph-fill ph-skip-back text-lg"></i>
@@ -234,8 +236,9 @@
     </div>
   </div>
 
-  <script src="data/asanas.js"></script>
-  <script src="data/presets.js"></script>
-  <script src="js/app.js"></script>
+  <!-- 加入版本號 ?v=2.0，強制瀏覽器讀取最新無錯誤的 JS 檔案 -->
+  <script src="data/asanas.js?v=2.0"></script>
+  <script src="data/presets.js?v=2.0"></script>
+  <script src="js/app.js?v=2.0"></script>
 </body>
 </html>
