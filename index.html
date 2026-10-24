@@ -23,7 +23,7 @@
       </div>
       <div>
         <h1 class="font-bold text-sm text-stone-800 leading-tight">Yoga Flow Studio</h1>
-        <p class="text-[10px] text-stone-500">自訂動作與雙語序列系統</p>
+        <p class="text-[10px] text-stone-500"></p>
       </div>
     </div>
 
@@ -45,20 +45,18 @@
     <!-- 視圖 1：動作庫 (Pose Library) -->
     <div id="view-library" class="hidden w-full h-full flex flex-col bg-white">
       <div class="p-3 border-b border-stone-100 space-y-2 shrink-0 bg-stone-50/70">
-        <!-- 搜尋列與【新增自訂動作】按鈕 -->
         <div class="flex items-center gap-2">
           <div class="relative flex-1">
             <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-sm"></i>
             <input type="text" id="search-input" placeholder="搜尋動作、梵文、經絡或口令..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
           </div>
-          <!-- 【新增動作按鈕】 -->
           <button id="btn-create-pose" class="px-2.5 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shrink-0 shadow-sm transition active:scale-95" title="新增自訂體位動作卡片">
             <i class="ph ph-plus-circle text-sm"></i>
             <span>新增動作</span>
           </button>
         </div>
 
-        <!-- 陰陽風格切換標籤 -->
+        <!-- 類型切換標籤 -->
         <div class="flex items-center gap-2 text-xs">
           <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-amber-800 text-white" data-type="all">全部 (All)</button>
           <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yang">陽流動 (Yang)</button>
@@ -69,39 +67,41 @@
       <div id="pose-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 custom-scroll pb-24"></div>
     </div>
 
-    <!-- 視圖 2：序列編排 (Sequence Builder) -->
+    <!-- 視圖 2：序列編排 (Sequence Builder) - 乾淨重構版 -->
     <div id="view-sequence" class="w-full h-full flex flex-col bg-[#FAF8F5]">
-      <!-- 課表控制頂部卡片 -->
-      <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2 shadow-sm">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 flex-1 min-w-0">
-            <input type="text" id="sequence-title-input" value="自訂練習課表" class="font-bold text-sm bg-transparent border-0 border-b border-transparent focus:border-amber-600 focus:ring-0 p-0 text-stone-800 flex-1 truncate">
-            <span id="seq-pose-count" class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold shrink-0">0 體位</span>
-          </div>
-          <!-- 快捷操作按鈕 -->
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition">
-              <i class="ph ph-plus"></i> 新建
-            </button>
-            <button id="btn-quick-save" class="text-xs px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-lg flex items-center gap-1 transition shadow-sm">
-              <i class="ph ph-floppy-disk"></i> 儲存
-            </button>
-            <button id="btn-quick-clear" class="text-xs px-2 py-1 text-stone-400 hover:text-rose-600 rounded-lg transition" title="清空全部動作">
-              <i class="ph ph-trash"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- 官方 30 套課表與自訂選單 -->
+      <!-- 課表控制頂部：以選單為核心，下方整齊陳列體位與功能按鈕 -->
+      <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2.5 shadow-sm">
+        <!-- 頂部直接呈現課表下拉選單 (與當前課表名稱完全一致) -->
         <div class="relative">
-          <select id="preset-sequence-select" class="w-full text-xs bg-stone-50 border border-stone-200 text-stone-700 rounded-xl px-3 py-2 pr-8 focus:ring-1 focus:ring-amber-500 appearance-none font-medium">
+          <select id="preset-sequence-select" class="w-full text-xs font-semibold bg-stone-50 border border-stone-200 text-stone-800 rounded-xl px-3 py-2 pr-8 focus:ring-1 focus:ring-amber-500 appearance-none shadow-sm">
             <option value="">-- 載入官方推薦 / 自訂課表 (30 套) --</option>
           </select>
           <i class="ph ph-caret-down absolute right-3 top-2.5 text-stone-400 pointer-events-none text-xs"></i>
         </div>
 
-        <div class="text-[11px] text-stone-500 flex items-center justify-between pt-0.5">
-          <span class="flex items-center gap-1"><i class="ph ph-clock"></i> 預估總時長: <strong id="seq-total-time" class="text-stone-700 font-semibold">0 分 0 秒</strong></span>
+        <!-- 功能按鈕與體位統計 (放置在下拉選單正下方) -->
+        <div class="flex items-center justify-between gap-1.5 pt-0.5">
+          <!-- 左側：體位數與總時間 -->
+          <div class="flex items-center gap-2 text-[11px] text-stone-500 min-w-0">
+            <span id="seq-pose-count" class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold shrink-0">0 體位</span>
+            <span class="truncate"><i class="ph ph-clock"></i> <strong id="seq-total-time" class="text-stone-700 font-semibold">0 分 0 秒</strong></span>
+          </div>
+
+          <!-- 右側：功能按鈕組 -->
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition" title="新建空白序列">
+              <i class="ph ph-plus"></i> 新建
+            </button>
+            <button id="btn-quick-save" class="text-xs px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-lg flex items-center gap-1 transition shadow-sm" title="儲存當前課表">
+              <i class="ph ph-floppy-disk"></i> 儲存
+            </button>
+            <button id="btn-manage-sequences" class="text-xs px-2 py-1 bg-stone-100 hover:bg-stone-200 text-stone-600 font-medium rounded-lg flex items-center gap-1 transition" title="管理與刪除自訂課表">
+              <i class="ph ph-gear"></i> 管理
+            </button>
+            <button id="btn-quick-clear" class="text-xs px-2 py-1 text-stone-400 hover:text-rose-600 rounded-lg transition" title="清空當前序列動作">
+              <i class="ph ph-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -112,7 +112,7 @@
             <i class="ph ph-sparkle"></i>
           </div>
           <p class="text-xs font-semibold text-stone-600">目前課表是空的</p>
-          <p class="text-[11px] text-stone-400 mt-1">載入上方官方課表，或切換至「動作庫」挑選體位加入！</p>
+          <p class="text-[11px] text-stone-400 mt-1">請由上方選單載入課表，或切換至「動作庫」挑選體位！</p>
           <button id="btn-empty-goto-lib" class="mt-4 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
             <i class="ph ph-books"></i> 挑選動作加入
           </button>
@@ -137,6 +137,30 @@
       <span>引導播放</span>
     </button>
   </nav>
+
+  <!-- 管理自訂課表 Modal -->
+  <div id="manage-seq-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
+        <div class="flex items-center gap-2">
+          <i class="ph-fill ph-folders text-amber-700 text-lg"></i>
+          <h3 class="font-bold text-sm text-stone-800">管理自訂課表 (My Custom Flows)</h3>
+        </div>
+        <button id="manage-seq-close" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-full">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-2.5 custom-scroll text-xs">
+        <p class="text-[11px] text-stone-400 mb-2">點擊垃圾桶圖示可徹底刪除該自訂課表：</p>
+        <div id="manage-seq-list" class="space-y-2"></div>
+      </div>
+
+      <div class="p-3 bg-stone-50 border-t border-stone-200 flex items-center justify-end">
+        <button id="manage-seq-done" class="px-4 py-1.5 bg-stone-800 hover:bg-stone-900 text-white rounded-xl text-xs font-medium transition">完成</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 動作詳情 Modal -->
   <div id="pose-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
@@ -191,7 +215,7 @@
     </div>
   </div>
 
-  <!-- 【新增自訂動作卡片 Modal】 (Create Custom Pose Modal) -->
+  <!-- 新增自訂動作 Modal -->
   <div id="pose-create-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
       <div class="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -253,8 +277,8 @@
         <div>
           <label class="block font-semibold text-stone-600 mb-1">換側設定</label>
           <select id="create-input-side" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
-            <option value="both">對稱體位 (無須分側)</option>
-            <option value="dual">需分左右側練習 (Left / Right)</option>
+            <option value="both">雙側對稱 (半時自動提醒換側)</option>
+            <option value="dual">單側體位 (需分別安排左/右側)</option>
           </select>
         </div>
 
@@ -264,7 +288,7 @@
         </div>
 
         <div>
-          <label class="block font-semibold text-stone-700 mb-1">中文引導口令 (Chinese Cues) *</label>
+          <label class="block font-semibold text-stone-700 mb-1">中文引導口令 *</label>
           <textarea id="create-input-cues-zh" rows="2" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-amber-500 leading-relaxed" placeholder="輸入此動作的指導詞..."></textarea>
         </div>
 
@@ -286,7 +310,7 @@
     </div>
   </div>
 
-  <!-- 序列動作卡片自訂編輯 Modal -->
+  <!-- 序列卡片編輯 Modal -->
   <div id="pose-edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
       <div class="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -319,7 +343,7 @@
           <div>
             <label class="block font-semibold text-stone-600 mb-1">側別設定</label>
             <select id="edit-input-side" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
-              <option value="both">雙側對稱 (Both)</option>
+              <option value="both">雙側對稱 (半時自動提醒換側)</option>
               <option value="left">左側 (Left Side)</option>
               <option value="right">右側 (Right Side)</option>
             </select>
@@ -344,7 +368,7 @@
     </div>
   </div>
 
-  <!-- 全螢幕播放器 (Player) -->
+  <!-- 全螢幕播放器 (Player) - 支援換側動態提示標籤 -->
   <div id="flow-player-modal" class="fixed inset-0 bg-stone-950 z-50 hidden flex flex-col text-white">
     <div class="px-4 py-3 flex items-center justify-between border-b border-stone-800 shrink-0">
       <div>
@@ -361,7 +385,13 @@
       </div>
     </div>
 
-    <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+    <div class="flex-1 flex flex-col items-center justify-center px-6 text-center relative">
+      <!-- 換側動態警示浮動標籤 (半時自動亮起) -->
+      <div id="player-switch-side-banner" class="hidden absolute top-4 px-4 py-1.5 bg-amber-500 text-stone-950 font-bold rounded-full text-xs shadow-lg animate-bounce flex items-center gap-1.5 z-10">
+        <i class="ph-bold ph-arrows-left-right"></i>
+        <span>時間過半，請準備換側！(Switch Sides)</span>
+      </div>
+
       <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-sm tracking-wider mb-0.5"></span>
       <h2 id="player-pose-title-zh" class="text-3xl font-extrabold text-white tracking-tight">體位中文名</h2>
       <p id="player-pose-title-en" class="text-stone-400 text-xs font-medium mt-0.5 mb-2">Pose English Name</p>
@@ -388,6 +418,7 @@
       </div>
     </div>
 
+    <!-- 播放器控制列 -->
     <div class="p-5 border-t border-stone-800 flex items-center justify-center gap-8 shrink-0 bg-stone-950 pb-8">
       <button id="player-prev-btn" class="p-3 bg-stone-900 text-stone-300 rounded-full active:scale-90 transition">
         <i class="ph-fill ph-skip-back text-lg"></i>
@@ -401,8 +432,8 @@
     </div>
   </div>
 
-  <script src="data/asanas.js?v=4.0"></script>
-  <script src="data/presets.js?v=4.0"></script>
-  <script src="js/app.js?v=4.0"></script>
+  <script src="data/asanas.js?v=6.0"></script>
+  <script src="data/presets.js?v=6.0"></script>
+  <script src="js/app.js?v=6.0"></script>
 </body>
 </html>

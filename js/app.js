@@ -1,14 +1,14 @@
 /**
- * Yoga Flow Studio - 核心邏輯 (支援自訂動作卡片新增與儲存)
+ * Yoga Flow Studio - 核心邏輯 (半時換側自動提醒 + 下拉選單連動排版版)
  */
 
 const AppState = {
   activeTab: 'sequence',
-  activeFilterType: 'all', // 'all' | 'yang' | 'yin' | 'custom'
+  activeFilterType: 'all',
   activeSearchKeyword: '',
   currentSequence: [],
   customSequences: {},
-  customPoses: [], // 使用者自訂動作卡片庫
+  customPoses: [],
   currentSequenceTitle: '自訂練習課表',
   
   editingItemUniqueId: null,
@@ -18,6 +18,7 @@ const AppState = {
     index: 0,
     secondsLeft: 0,
     totalSeconds: 0,
+    halfReminded: false, // 是否已觸發半時換側提醒
     isPaused: false,
     timerId: null,
     audioCtx: null
@@ -50,6 +51,30 @@ function playTibetanBowlSound() {
   }
 }
 
+// 換側專屬清脆微音效
+function playSwitchSideChime() {
+  try {
+    if (!AppState.player.audioCtx) {
+      AppState.player.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = AppState.player.audioCtx;
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    [520, 784].forEach((f, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now + idx * 0.15);
+      gain.gain.setValueAtTime(0.2, now + idx * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.15 + 1.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.15);
+      osc.stop(now + idx * 0.15 + 1.3);
+    });
+  } catch (e) {}
+}
+
 // 梵文音素平滑化
 function getPhoneticSanskrit(text) {
   if (!text) return '';
@@ -70,7 +95,7 @@ function getPhoneticSanskrit(text) {
     .trim();
 }
 
-// 帶超時保護的非阻塞語音
+// 非阻塞語音播放
 function speakAsync(text, lang = 'zh', timeoutMs = 6000) {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window) || !text) {
@@ -123,7 +148,7 @@ function speakAsync(text, lang = 'zh', timeoutMs = 6000) {
   });
 }
 
-// 體位語音流程
+// 體位開始語音流程
 async function triggerPoseSpeech(item) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
@@ -141,6 +166,7 @@ async function triggerPoseSpeech(item) {
   let sideEn = '';
   if (item.selectedSide === 'left') { sideZh = '，左側'; sideEn = ', Left side'; }
   if (item.selectedSide === 'right') { sideZh = '，右側'; sideEn = ', Right side'; }
+  if (item.selectedSide === 'both') { sideZh = '，雙側對稱'; sideEn = ', Both sides'; }
 
   if (langChoice === 'en') {
     const enText = item.cuesEn || item.cues;
@@ -149,6 +175,25 @@ async function triggerPoseSpeech(item) {
     await speakAsync(`${item.zh}${sideZh}。${item.en || ''}。${item.cues}`, 'zh', 8000);
   } else {
     await speakAsync(`${item.zh}${sideZh}。${item.cues}`, 'zh', 7000);
+  }
+}
+
+// 【新增】過半換側語音提醒
+async function triggerSwitchSideReminder() {
+  const langChoice = document.getElementById('voice-lang-select')?.value || 'dual';
+  playSwitchSideChime();
+
+  // 畫面動態橫幅短暫閃爍 3.5 秒
+  const banner = document.getElementById('player-switch-side-banner');
+  if (banner) {
+    banner.classList.remove('hidden');
+    setTimeout(() => banner.classList.add('hidden'), 3500);
+  }
+
+  if (langChoice === 'en') {
+    await speakAsync("Halfway. Please switch sides.", 'en', 3000);
+  } else {
+    await speakAsync("時間過半，請準備換另一側練習。", 'zh', 3500);
   }
 }
 
@@ -173,7 +218,6 @@ function switchTab(targetTab) {
   }
 }
 
-// 取得全部體位（官方 142 + 使用者自訂）
 function getAllPoses() {
   const official = window.YOGA_ASANAS || [];
   return [...AppState.customPoses, ...official];
@@ -232,7 +276,7 @@ function renderPoseGrid() {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5 mb-0.5">
             <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${tagBg}">
-              ${isCustom ? '自訂體位' : (isYin ? '陰瑜珈' : '陽流動')}
+              ${isCustom ? '自訂' : (isYin ? '陰' : '陽')}
             </span>
             ${p.chakras ? `<span class="text-[9px] text-stone-400 truncate max-w-[110px]">${p.chakras}</span>` : ''}
           </div>
@@ -342,13 +386,11 @@ function renderSequenceList() {
       <div class="flex items-center justify-between pt-1 border-t border-stone-100 text-xs">
         <div class="flex items-center gap-1.5 text-stone-500">
           <span class="text-[10px] text-stone-400">側別:</span>
-          ${item.hasSideOption ? `
-            <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5 focus:ring-0">
-              <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側對稱</option>
-              <option value="left" ${item.selectedSide === 'left' ? 'selected' : ''}>左側 (Left)</option>
-              <option value="right" ${item.selectedSide === 'right' ? 'selected' : ''}>右側 (Right)</option>
-            </select>
-          ` : '<span class="text-[10px] text-stone-500 font-medium">雙側對稱</span>'}
+          <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5 focus:ring-0">
+            <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側對稱 (半時提醒)</option>
+            <option value="left" ${item.selectedSide === 'left' ? 'selected' : ''}>左側 (Left)</option>
+            <option value="right" ${item.selectedSide === 'right' ? 'selected' : ''}>右側 (Right)</option>
+          </select>
         </div>
 
         <div class="flex items-center gap-2 text-stone-400">
@@ -366,9 +408,7 @@ function renderSequenceList() {
     `;
 
     card.querySelector('.btn-edit')?.addEventListener('click', () => openEditPoseModal(item.uniqueId));
-    if (item.hasSideOption) {
-      card.querySelector('.side-selector')?.addEventListener('change', (e) => { item.selectedSide = e.target.value; });
-    }
+    card.querySelector('.side-selector')?.addEventListener('change', (e) => { item.selectedSide = e.target.value; });
     card.querySelector('.btn-delete')?.addEventListener('click', () => {
       AppState.currentSequence.splice(index, 1);
       renderSequenceList();
@@ -423,7 +463,7 @@ function updateSequenceStats() {
   if (timeEl) timeEl.innerText = `${min} 分 ${sec} 秒`;
 }
 
-// 【自訂動作新增功能】
+// 自訂動作新增
 function openCreatePoseModal() {
   document.getElementById('create-input-zh').value = '';
   document.getElementById('create-input-en').value = '';
@@ -524,9 +564,8 @@ function createNewBlankSequence() {
   const name = prompt("請輸入新課表名稱：", "我的自訂瑜珈課表");
   if (name === null) return;
   AppState.currentSequenceTitle = name.trim() || "未命名課表";
-  const titleInput = document.getElementById('sequence-title-input');
-  if (titleInput) titleInput.value = AppState.currentSequenceTitle;
 
+  // 清空當前內容並重設選單
   AppState.currentSequence = [];
   const select = document.getElementById('preset-sequence-select');
   if (select) select.value = "";
@@ -535,7 +574,7 @@ function createNewBlankSequence() {
   showToast(`已建立空白序列: ${AppState.currentSequenceTitle}`);
 }
 
-// 清空序列
+// 清空序列動作
 function clearCurrentSequence() {
   if (AppState.currentSequence.length === 0) {
     showToast("目前序列是空的唷！");
@@ -555,8 +594,10 @@ function loadPresetSequence(presetId) {
   if (!found) return;
 
   AppState.currentSequenceTitle = found.name;
-  const titleInput = document.getElementById('sequence-title-input');
-  if (titleInput) titleInput.value = found.name;
+
+  // 下拉選單同步選中對應項目
+  const select = document.getElementById('preset-sequence-select');
+  if (select) select.value = 'preset_' + presetId;
 
   AppState.currentSequence = [];
   if (Array.isArray(found.poses)) {
@@ -566,7 +607,7 @@ function loadPresetSequence(presetId) {
   showToast(`已載入: ${found.name}`);
 }
 
-// 下拉選單渲染
+// 下拉選單渲染 (與當前課表完全同步)
 function refreshPresetDropdown() {
   const select = document.getElementById('preset-sequence-select');
   if (!select) return;
@@ -612,28 +653,109 @@ function saveCurrentCustomSequence() {
     alert("目前序列中沒有體位動作，請先挑選加入！");
     return;
   }
-  const currentTitle = document.getElementById('sequence-title-input')?.value.trim() || AppState.currentSequenceTitle || '自訂課表';
+  const currentTitle = AppState.currentSequenceTitle || '自訂課表';
   const newTitle = prompt("請輸入此套課表名稱：", currentTitle);
   if (!newTitle) return;
 
   AppState.customSequences[newTitle] = JSON.parse(JSON.stringify(AppState.currentSequence));
   AppState.currentSequenceTitle = newTitle;
-  const titleInput = document.getElementById('sequence-title-input');
-  if (titleInput) titleInput.value = newTitle;
 
   localStorage.setItem('yoga_flow_custom_db', JSON.stringify(AppState.customSequences));
   refreshPresetDropdown();
+
+  // 選單切換到剛儲存的課表
+  const select = document.getElementById('preset-sequence-select');
+  if (select) select.value = 'custom_' + newTitle;
+
   showToast(`已成功儲存自訂課表「${newTitle}」！`);
 }
 
 function loadCustomSequence(title) {
   if (!AppState.customSequences[title]) return;
   AppState.currentSequenceTitle = title;
-  const titleInput = document.getElementById('sequence-title-input');
-  if (titleInput) titleInput.value = title;
+
+  const select = document.getElementById('preset-sequence-select');
+  if (select) select.value = 'custom_' + title;
+
   AppState.currentSequence = JSON.parse(JSON.stringify(AppState.customSequences[title]));
   renderSequenceList();
   showToast(`已載入自訂課表: ${title}`);
+}
+
+// 管理自訂課表彈窗
+function openManageSequencesModal() {
+  const container = document.getElementById('manage-seq-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const savedKeys = Object.keys(AppState.customSequences);
+
+  if (savedKeys.length === 0) {
+    container.innerHTML = `
+      <div class="py-8 text-center text-stone-400">
+        <i class="ph ph-folder-open text-2xl mb-1"></i>
+        <p class="text-xs">目前沒有任何自訂課表</p>
+      </div>
+    `;
+  } else {
+    savedKeys.forEach(name => {
+      const poses = AppState.customSequences[name] || [];
+      const totalSec = poses.reduce((acc, cur) => acc + (parseInt(cur.duration) || 0), 0);
+      const min = Math.floor(totalSec / 60);
+
+      const row = document.createElement('div');
+      row.className = 'p-3 bg-stone-50 border border-stone-200 rounded-xl flex items-center justify-between gap-2';
+
+      row.innerHTML = `
+        <div class="min-w-0 flex-1">
+          <h4 class="font-bold text-xs text-stone-800 truncate">⭐ ${name}</h4>
+          <p class="text-[10px] text-stone-500 mt-0.5">${poses.length} 個體位 • 約 ${min} 分鐘</p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button class="btn-load-custom px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-medium transition">
+            載入
+          </button>
+          <button class="btn-delete-custom p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="徹底刪除此課表">
+            <i class="ph ph-trash text-base"></i>
+          </button>
+        </div>
+      `;
+
+      row.querySelector('.btn-load-custom').addEventListener('click', () => {
+        loadCustomSequence(name);
+        closeManageSequencesModal();
+      });
+
+      row.querySelector('.btn-delete-custom').addEventListener('click', () => {
+        deleteCustomSequence(name);
+      });
+
+      container.appendChild(row);
+    });
+  }
+
+  document.getElementById('manage-seq-modal')?.classList.remove('hidden');
+}
+
+function closeManageSequencesModal() {
+  document.getElementById('manage-seq-modal')?.classList.add('hidden');
+}
+
+function deleteCustomSequence(title) {
+  if (confirm(`確定要徹底刪除自訂課表「${title}」嗎？此操作無法還原！`)) {
+    delete AppState.customSequences[title];
+    localStorage.setItem('yoga_flow_custom_db', JSON.stringify(AppState.customSequences));
+
+    if (AppState.currentSequenceTitle === title) {
+      AppState.currentSequenceTitle = "自訂練習課表";
+      const select = document.getElementById('preset-sequence-select');
+      if (select) select.value = "";
+    }
+
+    refreshPresetDropdown();
+    openManageSequencesModal();
+    showToast(`已徹底刪除課表「${title}」！`);
+  }
 }
 
 // 動作詳情 Modal
@@ -703,6 +825,7 @@ function closeFlowPlayer() {
   document.getElementById('flow-player-modal')?.classList.add('hidden');
 }
 
+// 核心載入動作與時間計算
 function loadPlayerStep() {
   if (AppState.player.timerId) {
     clearInterval(AppState.player.timerId);
@@ -725,6 +848,10 @@ function loadPlayerStep() {
   const currentItem = AppState.currentSequence[pState.index];
   pState.secondsLeft = parseInt(currentItem.duration) || 30;
   pState.totalSeconds = pState.secondsLeft;
+  pState.halfReminded = false; // 重設半時換側狀態
+
+  // 隱藏換側 Banner
+  document.getElementById('player-switch-side-banner')?.classList.add('hidden');
 
   const seqNameEl = document.getElementById('player-seq-name');
   if (seqNameEl) seqNameEl.innerText = AppState.currentSequenceTitle;
@@ -738,7 +865,7 @@ function loadPlayerStep() {
   const titleZhEl = document.getElementById('player-pose-title-zh');
   if (titleZhEl) titleZhEl.innerText = currentItem.zh;
 
-  let sideStr = "雙側對稱";
+  let sideStr = "雙側對稱 (半時換側)";
   if (currentItem.selectedSide === 'left') sideStr = "左側 (Left)";
   if (currentItem.selectedSide === 'right') sideStr = "右側 (Right)";
   
@@ -764,6 +891,14 @@ function loadPlayerStep() {
       pState.secondsLeft--;
       updatePlayerProgress();
 
+      // 【核心邏輯】：當體位為雙側對稱 (both) 且時間剛好到達一半時，自動提醒換側
+      const halfTime = Math.floor(pState.totalSeconds / 2);
+      if (currentItem.selectedSide === 'both' && pState.secondsLeft === halfTime && !pState.halfReminded) {
+        pState.halfReminded = true;
+        triggerSwitchSideReminder();
+      }
+
+      // 倒數結束自動切換下一動
       if (pState.secondsLeft <= 0) {
         clearInterval(pState.timerId);
         pState.timerId = null;
@@ -800,9 +935,8 @@ function showToast(msg) {
   setTimeout(() => toast.classList.add('opacity-0'), 1800);
 }
 
-// 頁面初始化
+// 頁面啟動初始化
 window.addEventListener('DOMContentLoaded', () => {
-  // 讀取自訂課表與自訂動作
   try {
     const rawSeq = localStorage.getItem('yoga_flow_custom_db');
     if (rawSeq) AppState.customSequences = JSON.parse(rawSeq);
@@ -817,6 +951,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadPresetSequence('hips_l1');
   }
 
+  // 課表下拉選單監聽 (選擇即同步載入)
   document.getElementById('preset-sequence-select')?.addEventListener('change', (e) => {
     const val = e.target.value;
     if (!val) return;
@@ -829,18 +964,23 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-quick-save')?.addEventListener('click', saveCurrentCustomSequence);
   document.getElementById('btn-empty-goto-lib')?.addEventListener('click', () => switchTab('library'));
 
-  // 【新增動作按鈕監聽】
+  // 管理課表按鈕
+  document.getElementById('btn-manage-sequences')?.addEventListener('click', openManageSequencesModal);
+  document.getElementById('manage-seq-close')?.addEventListener('click', closeManageSequencesModal);
+  document.getElementById('manage-seq-done')?.addEventListener('click', closeManageSequencesModal);
+
+  // 自訂動作新增按鈕
   document.getElementById('btn-create-pose')?.addEventListener('click', openCreatePoseModal);
   document.getElementById('create-modal-close')?.addEventListener('click', closeCreatePoseModal);
   document.getElementById('create-modal-cancel')?.addEventListener('click', closeCreatePoseModal);
   document.getElementById('create-modal-save')?.addEventListener('click', saveNewCustomPose);
 
-  // 編輯動作卡片監聽
+  // 編輯卡片內容按鈕
   document.getElementById('edit-modal-close')?.addEventListener('click', closeEditPoseModal);
   document.getElementById('edit-modal-cancel')?.addEventListener('click', closeEditPoseModal);
   document.getElementById('edit-modal-save')?.addEventListener('click', saveEditedPoseContent);
 
-  // 篩選按鈕
+  // 類型切換
   document.querySelectorAll('.type-filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.type-filter-btn').forEach(b => {
