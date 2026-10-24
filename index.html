@@ -4,28 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Yoga Flow Studio - 專業瑜珈序列編排與教學播放器</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
-    body {
-      font-family: 'Noto Sans TC', sans-serif;
-      background-color: #FAF8F5;
-      color: #2D3748;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .custom-scroll::-webkit-scrollbar {
-      display: none;
-    }
-    .custom-scroll {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .pose-svg-box svg {
-      filter: drop-shadow(0 1px 2px rgba(180, 83, 9, 0.15));
-    }
+    body { font-family: 'Noto Sans TC', sans-serif; background-color: #FAF8F5; color: #2D3748; }
+    .custom-scroll::-webkit-scrollbar { display: none; }
+    .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
@@ -38,129 +23,83 @@
       </div>
       <div>
         <h1 class="font-bold text-sm text-stone-800 leading-tight">Yoga Flow Studio</h1>
-        <p class="text-[10px] text-stone-500">82 體位序列助手</p>
+        <p class="text-[10px] text-stone-500">142 陽流動與陰瑜珈體位</p>
       </div>
     </div>
 
-    <!-- 語音語言設定與更多選單 -->
+    <!-- 語音切換與梵文開關 -->
     <div class="flex items-center gap-2">
-      <!-- 語音切換 -->
       <select id="voice-lang-select" class="text-[11px] bg-stone-100 border border-stone-200 text-stone-700 rounded-lg px-2 py-1 focus:ring-0">
         <option value="zh">中文口令</option>
         <option value="en">English Cues</option>
         <option value="dual">中英雙語</option>
       </select>
-
-      <!-- 梵文朗讀開關 -->
       <label class="flex items-center gap-1 text-[11px] text-stone-600 bg-stone-100 border border-stone-200 px-2 py-1 rounded-lg cursor-pointer">
         <input type="checkbox" id="voice-sanskrit-toggle" checked class="rounded text-amber-600 focus:ring-amber-500 w-3 h-3">
         <span>梵文</span>
       </label>
-
-      <!-- 更多操作按鈕 -->
-      <button id="btn-top-menu" class="p-1.5 text-stone-600 hover:text-stone-900 bg-stone-100 rounded-lg" title="更多選項">
-        <i class="ph ph-dots-three-vertical text-base"></i>
-      </button>
     </div>
   </header>
 
-  <!-- 頂部更多下拉選單 -->
-  <div id="top-menu-dropdown" class="hidden absolute right-4 top-13 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-44 z-30 text-xs">
-    <button id="btn-menu-new" class="w-full text-left px-4 py-2 hover:bg-stone-50 text-stone-700 flex items-center gap-2">
-      <i class="ph ph-plus-circle text-base text-amber-600"></i> 新建空白序列
-    </button>
-    <button id="btn-save-seq" class="w-full text-left px-4 py-2 hover:bg-stone-50 text-stone-700 flex items-center gap-2">
-      <i class="ph ph-floppy-disk text-base text-amber-700"></i> 儲存自訂課表
-    </button>
-    <button id="btn-export-json" class="w-full text-left px-4 py-2 hover:bg-stone-50 text-stone-700 flex items-center gap-2">
-      <i class="ph ph-export text-base text-stone-600"></i> 匯出 JSON 檔案
-    </button>
-    <button id="btn-clear-seq" class="w-full text-left px-4 py-2 hover:bg-rose-50 text-rose-600 flex items-center gap-2 border-t border-stone-100">
-      <i class="ph ph-trash text-base"></i> 清空當前編排
-    </button>
-  </div>
-
-  <!-- 主畫面：視圖切換區 -->
   <main class="flex-1 overflow-hidden relative">
-
-    <!-- 視圖 1：動作庫 (Pose Library View) -->
+    <!-- 視圖 1：動作庫 -->
     <div id="view-library" class="hidden w-full h-full flex flex-col bg-white">
-      <!-- 搜尋與分類滑動列 -->
       <div class="p-3 border-b border-stone-100 space-y-2 shrink-0 bg-stone-50/50">
         <div class="relative">
           <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-sm"></i>
-          <input type="text" id="search-input" placeholder="搜尋體位名稱、梵文、口令..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
+          <input type="text" id="search-input" placeholder="搜尋動作、經絡、脈輪、口令..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
         </div>
-        
-        <!-- 分類膠囊標籤列 (支援橫向滑動) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scroll text-xs">
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-800 text-white" data-cat="all">全部 (82)</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="warmup">暖身脊椎</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="standing">站姿下肢</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="balance">平衡體位</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="backbend">後彎開胸</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="inversion">倒立調息</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="armbalance">手臂支撐</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="seated">坐姿開髖</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="advanced">進階體位</button>
-          <button class="cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600" data-cat="cooldown">收尾修復</button>
+        <!-- 陰陽風格快速切換標籤 -->
+        <div class="flex items-center gap-2 text-xs">
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-amber-800 text-white" data-type="all">全部 (142)</button>
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yang">陽流動 (82)</button>
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yin">陰瑜珈 (60)</button>
         </div>
       </div>
-
-      <!-- 動作清單列表 (附帶精美動作向量圖示) -->
-      <div id="pose-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 custom-scroll pb-24">
-        <!-- JS 動態生成體位卡片 (含 SVG 圖示) -->
-      </div>
+      <div id="pose-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 custom-scroll pb-24"></div>
     </div>
 
-    <!-- 視圖 2：序列編排 (Sequence View) -->
+    <!-- 視圖 2：序列編排 -->
     <div id="view-sequence" class="w-full h-full flex flex-col bg-[#FAF8F5]">
-      <!-- 課表標題、快速新建與課表載入列 -->
       <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2.5 shadow-sm">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 flex-1 min-w-0">
-            <input type="text" id="sequence-title-input" value="自訂練習課表" class="font-bold text-sm bg-transparent border-0 border-b border-transparent focus:border-amber-600 focus:ring-0 p-0 text-stone-800 flex-1 truncate" title="點擊直接修改課表名稱">
+            <input type="text" id="sequence-title-input" value="自訂練習課表" class="font-bold text-sm bg-transparent border-0 border-b border-transparent focus:border-amber-600 focus:ring-0 p-0 text-stone-800 flex-1 truncate">
             <span id="seq-pose-count" class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold shrink-0">0 體位</span>
           </div>
-          <!-- 醒目的快捷按鈕：新建 / 儲存 / 清空 -->
+          <!-- 醒目的實體按鈕：新建 / 儲存 / 清空 -->
           <div class="flex items-center gap-1.5 shrink-0">
-            <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition" title="新建空白序列">
+            <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition">
               <i class="ph ph-plus"></i> 新建
             </button>
-            <button id="btn-quick-save" class="text-xs px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-lg flex items-center gap-1 transition shadow-sm" title="儲存當前課表">
+            <button id="btn-quick-save" class="text-xs px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-lg flex items-center gap-1 transition shadow-sm">
               <i class="ph ph-floppy-disk"></i> 儲存
             </button>
-            <button id="btn-quick-clear" class="text-xs px-2 py-1 text-stone-400 hover:text-rose-600 rounded-lg transition" title="清空所有體位">
+            <button id="btn-quick-clear" class="text-xs px-2 py-1 text-stone-400 hover:text-rose-600 rounded-lg transition" title="清空所有動作">
               <i class="ph ph-trash"></i>
             </button>
           </div>
         </div>
 
-        <!-- 官方預設 / 自訂課表下拉選單 -->
-        <div class="flex items-center gap-2">
-          <div class="relative flex-1">
-            <select id="preset-sequence-select" class="w-full text-xs bg-stone-50 border border-stone-200 text-stone-700 rounded-xl px-3 py-1.5 pr-8 focus:ring-1 focus:ring-amber-500 focus:border-amber-600 appearance-none font-medium">
-              <option value="">-- 載入官方預設 / 自訂課表 --</option>
-            </select>
-            <i class="ph ph-caret-down absolute right-2.5 top-2.5 text-stone-400 pointer-events-none text-xs"></i>
-          </div>
+        <div class="relative">
+          <select id="preset-sequence-select" class="w-full text-xs bg-stone-50 border border-stone-200 text-stone-700 rounded-xl px-3 py-1.5 pr-8 focus:ring-1 focus:ring-amber-500 appearance-none font-medium">
+            <option value="">-- 載入官方預設 / 自訂課表 --</option>
+          </select>
+          <i class="ph ph-caret-down absolute right-2.5 top-2.5 text-stone-400 pointer-events-none text-xs"></i>
         </div>
 
         <div class="text-[11px] text-stone-500 flex items-center justify-between pt-0.5">
           <span class="flex items-center gap-1"><i class="ph ph-clock"></i> 總時長: <strong id="seq-total-time" class="text-stone-700 font-semibold">0 分 0 秒</strong></span>
-          <span class="flex items-center gap-1"><i class="ph ph-fire"></i> 強度: <strong id="seq-heat-indicator" class="text-stone-700 font-semibold">溫和</strong></span>
         </div>
       </div>
 
-      <!-- 序列卡片清單 (支援手機直向操作) -->
       <div id="sequence-container" class="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scroll pb-28">
-        <!-- 序列為空時的導引畫面 -->
         <div id="sequence-empty-state" class="h-full flex flex-col items-center justify-center text-stone-400 py-16 px-6 text-center">
           <div class="w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center text-2xl mb-2 text-stone-400">
             <i class="ph ph-sparkle"></i>
           </div>
           <p class="text-xs font-semibold text-stone-600">目前課表是空的</p>
-          <p class="text-[11px] text-stone-400 mt-1 max-w-xs">點選上方下拉選單載入經典課表，或切換到下方「動作庫」挑選體位加入！</p>
+          <p class="text-[11px] text-stone-400 mt-1">載入上方經典課表，或切換到「動作庫」挑選體位加入！</p>
           <button id="btn-empty-goto-lib" class="mt-4 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
             <i class="ph ph-books"></i> 挑選動作加入
           </button>
@@ -169,20 +108,18 @@
     </div>
   </main>
 
-  <!-- 底部導航列 (Bottom Tab Bar) -->
+  <!-- 底部導航列 -->
   <nav class="bg-white border-t border-stone-200 px-6 py-2 shrink-0 flex items-center justify-between z-30 shadow-lg">
     <button id="tab-library" class="tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]">
       <i class="ph-bold ph-books text-xl"></i>
       <span>動作庫</span>
     </button>
-
     <button id="tab-sequence" class="tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative">
       <i class="ph-fill ph-cards text-xl"></i>
       <span>編排序列</span>
       <span id="tab-badge" class="hidden absolute -top-1 -right-2 w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">0</span>
     </button>
-
-    <button id="tab-play" class="flex flex-col items-center gap-1 text-white bg-amber-700 hover:bg-amber-800 px-4 py-1.5 rounded-xl text-[11px] font-semibold shadow-md shadow-amber-800/20 active:scale-95 transition">
+    <button id="tab-play" class="flex flex-col items-center gap-1 text-white bg-amber-700 hover:bg-amber-800 px-4 py-1.5 rounded-xl text-[11px] font-semibold shadow-md active:scale-95 transition">
       <i class="ph-fill ph-play text-base"></i>
       <span>引導播放</span>
     </button>
@@ -190,34 +127,24 @@
 
   <!-- 動作詳情 Modal -->
   <div id="pose-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[88vh] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[88vh] overflow-hidden flex flex-col shadow-2xl">
       <div class="p-4 border-b border-stone-100 flex items-start justify-between bg-stone-50/70">
-        <div class="flex items-center gap-3">
-          <div id="modal-svg-preview" class="w-14 h-14 bg-amber-50 border border-amber-200/60 rounded-xl flex items-center justify-center p-1.5 shrink-0">
-            <!-- 動作 SVG 圖示 -->
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="modal-card-id" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-200 text-stone-700">#01</span>
+            <h2 id="modal-zh-name" class="font-bold text-lg text-stone-800">體位名稱</h2>
           </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span id="modal-card-id" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-200 text-stone-700">#01</span>
-              <h2 id="modal-zh-name" class="font-bold text-lg text-stone-800">貓牛式</h2>
-            </div>
-            <p id="modal-en-name" class="text-xs text-stone-500 font-medium">Cat Cow</p>
-            <p id="modal-sanskrit-name" class="text-xs text-amber-800 italic font-serif">Marjaryasana Bitilasana</p>
-          </div>
+          <p id="modal-en-name" class="text-xs text-stone-500 font-medium">Pose Name</p>
+          <p id="modal-sanskrit-name" class="text-xs text-amber-800 italic font-serif">Sanskrit</p>
         </div>
-        <div class="flex items-center gap-1">
-          <button id="modal-voice-btn" class="p-2 text-stone-500 hover:text-amber-700 rounded-full" title="試聽發音">
-            <i class="ph-fill ph-speaker-high text-lg"></i>
-          </button>
-          <button id="modal-close-btn" class="p-2 text-stone-400 hover:text-stone-700 rounded-full">
-            <i class="ph ph-x text-lg"></i>
-          </button>
-        </div>
+        <button id="modal-close-btn" class="p-2 text-stone-400 hover:text-stone-700 rounded-full">
+          <i class="ph ph-x text-lg"></i>
+        </button>
       </div>
 
       <div class="p-4 overflow-y-auto space-y-3 custom-scroll text-xs leading-relaxed">
         <div>
-          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-target text-amber-600"></i> 目標解剖部位與效益</h4>
+          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-target text-amber-600"></i> 解剖效益 / 經絡脈輪</h4>
           <p id="modal-benefits" class="text-stone-600 bg-amber-50/60 p-2.5 rounded-xl border border-amber-100/70"></p>
         </div>
         <div>
@@ -259,19 +186,12 @@
       </div>
     </div>
 
-    <!-- 播放器中央內容 (含大尺寸向量動作姿態圖示) -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-base tracking-wider mb-1">Marjaryasana Bitilasana</span>
-      <h2 id="player-pose-title" class="text-3xl font-extrabold text-white mb-1 tracking-tight">貓牛式</h2>
-      <p id="player-pose-sub" class="text-stone-400 text-xs mb-3">Cat Cow • 雙側流動</p>
+      <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-base tracking-wider mb-1"></span>
+      <h2 id="player-pose-title" class="text-3xl font-extrabold text-white mb-1 tracking-tight">體位</h2>
+      <p id="player-pose-sub" class="text-stone-400 text-xs mb-4">Pose</p>
 
-      <!-- 動作向量圖形展示視窗 -->
-      <div id="player-svg-box" class="w-28 h-24 bg-stone-900 border border-stone-800 rounded-2xl p-2 flex items-center justify-center my-1 text-amber-500 shadow-inner">
-        <!-- SVG 動態插入 -->
-      </div>
-
-      <!-- 圓形倒數計時器 -->
-      <div class="relative w-44 h-44 flex items-center justify-center my-2">
+      <div class="relative w-48 h-48 flex items-center justify-center my-4">
         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="44" stroke="#292524" stroke-width="6" fill="transparent" />
           <circle id="player-progress-circle" cx="50" cy="50" r="44" stroke="#D97706" stroke-width="6" fill="transparent" stroke-dasharray="276.46" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-300" />
@@ -282,18 +202,15 @@
         </div>
       </div>
 
-      <!-- 語音口令展示卡 -->
       <div class="bg-stone-900/90 border border-stone-800 rounded-xl p-3 mt-2 w-full text-stone-300 text-xs leading-relaxed min-h-[70px] flex items-center justify-center">
-        <p id="player-cues-text" class="text-center font-normal">吸氣抬頭延展脊椎，吐氣圓背收緊核心，順應呼氣深緩流動。</p>
+        <p id="player-cues-text" class="text-center font-normal">引導口令載入中...</p>
       </div>
-
       <div class="mt-2.5 flex items-center gap-1.5 text-[11px] text-stone-500">
         <span>下個動作:</span>
-        <strong id="player-next-pose-name" class="text-stone-300">坐姿繞肩</strong>
+        <strong id="player-next-pose-name" class="text-stone-300">...</strong>
       </div>
     </div>
 
-    <!-- 播放器底部控制欄位 -->
     <div class="p-5 border-t border-stone-800 flex items-center justify-center gap-8 shrink-0 bg-stone-950 pb-8">
       <button id="player-prev-btn" class="p-3 bg-stone-900 text-stone-300 rounded-full active:scale-90 transition">
         <i class="ph-fill ph-skip-back text-lg"></i>
@@ -307,10 +224,8 @@
     </div>
   </div>
 
-  <!-- 引用外部拆分好的資料與程式庫 -->
   <script src="data/asanas.js"></script>
   <script src="data/presets.js"></script>
-  <script src="js/pose-icons.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
