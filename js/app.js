@@ -1,11 +1,10 @@
 /**
- * Yoga Flow Studio - 雙語介面與核心邏輯
+ * Yoga Flow Studio - 核心邏輯 (修復 ID 對應與點擊事件)
  */
 
 const AppState = {
   activeTab: 'sequence',
-  activeFilterType: 'all', // 'all' | 'yang' | 'yin'
-  activeFilterCat: 'all',
+  activeFilterType: 'all',
   activeSearchKeyword: '',
   currentSequence: [],
   customSequences: {},
@@ -22,7 +21,7 @@ const AppState = {
   }
 };
 
-// 西藏頌缽合成器
+// 頌缽音效
 function playTibetanBowlSound() {
   try {
     if (!AppState.player.audioCtx) {
@@ -48,82 +47,125 @@ function playTibetanBowlSound() {
   }
 }
 
-// 優化後的語音朗讀函式：支援精準音調與梵文專用語音引擎
-function speakVoice(text, lang = 'zh') {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  if (!text) return;
-
-  const u = new SpeechSynthesisUtterance(text);
-  const voices = window.speechSynthesis.getVoices();
-
-  if (lang === 'sa') {
-    // 梵文發音：尋找最自然的印度語系或義大利/拉丁發音引擎
-    const sanskritVoice = voices.find(v => 
-      v.lang === 'sa-IN' || v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.name.includes('India')
-    );
-    if (sanskritVoice) u.voice = sanskritVoice;
-    u.lang = 'hi-IN';
-    u.rate = 0.82; // 梵文放慢語速，讓尾音如 asana 完整發音
-    u.pitch = 0.95; // 微降音高，營造沉穩、如念頌般的音色
-  } else if (lang === 'en') {
-    const enVoice = voices.find(v => v.lang === 'en-US' && (v.name.includes('Natural') || v.name.includes('Samantha')));
-    if (enVoice) u.voice = enVoice;
-    u.lang = 'en-US';
-    u.rate = 0.90;
-    u.pitch = 1.0;
-  } else {
-    const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.startsWith('zh'));
-    if (zhVoice) u.voice = zhVoice;
-    u.lang = 'zh-TW';
-    u.rate = 0.92;
-    u.pitch = 1.0;
-  }
-
-  window.speechSynthesis.speak(u);
-}
-
-// 播放前音節平滑處理
-function sanitizeSanskritForSpeech(sanskrit) {
-  if (!sanskrit) return '';
-  // 將長字串進行連讀平滑微調，避免瀏覽器語音卡頓
-  return sanskrit
+// ==========================================
+// 梵文語音音素修復字典 (Phonetic Normalization)
+// ==========================================
+function getPhoneticSanskrit(text) {
+  if (!text) return '';
+  return text
+    // 處理母音長音與特殊子音，轉換為 TTS 自然音素
     .replace(/ā/g, 'aa')
     .replace(/ī/g, 'ee')
     .replace(/ū/g, 'oo')
-    .replace(/ṣ/g, 'sh')
+    .replace(/ṛ/g, 'ri')
     .replace(/ś/g, 'sh')
-    .replace(/ṛ/g, 'ri');
+    .replace(/ṣ/g, 'sh')
+    .replace(/c/g, 'ch')
+    // 針對常見字根做節奏斷詞優化
+    .replace(/asana/gi, ' aasana')
+    .replace(/svana/gi, 'shvana')
+    .replace(/mukha/gi, 'mookha')
+    .replace(/adho/gi, 'ud-ho')
+    .replace(/baddha/gi, 'bud-dha')
+    .replace(/virabhadra/gi, 'veera-bhadra')
+    .replace(/matsyendra/gi, 'mut-syendra')
+    .replace(/sarvanga/gi, 'sarv-aanga')
+    .trim();
 }
 
-function triggerPoseSpeech(item) {
+// ==========================================
+// Promise 式語音合成播放器 (防止中斷與重疊)
+// ==========================================
+function speakAsync(text, lang = 'zh') {
+  return new Promise((resolve) => {
+    if (!('speechSynthesis' in window) || !text) {
+      resolve();
+      return;
+    }
+
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+
+    if (lang === 'sa') {
+      // 梵文：優先尋找印地語/梵語/拉丁系優質語音包
+      const sanskritVoice = voices.find(v => 
+        v.lang === 'sa-IN' || 
+        v.lang === 'hi-IN' || 
+        v.lang.startsWith('hi') || 
+        v.name.includes('India') || 
+        v.lang === 'it-IT'
+      );
+      if (sanskritVoice) u.voice = sanskritVoice;
+      u.lang = 'hi-IN';
+      u.rate = 0.80; // 沉穩且字字分明
+      u.pitch = 0.92;
+    } else if (lang === 'en') {
+      // 英文：選用標準美語自然語音
+      const enVoice = voices.find(v => v.lang === 'en-US' && (v.name.includes('Natural') || v.name.includes('Samantha')));
+      if (enVoice) u.voice = enVoice;
+      u.lang = 'en-US';
+      u.rate = 0.90;
+      u.pitch = 1.0;
+    } else {
+      // 中文：標準繁體中文語音
+      const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.startsWith('zh'));
+      if (zhVoice) u.voice = zhVoice;
+      u.lang = 'zh-TW';
+      u.rate = 0.92;
+      u.pitch = 1.0;
+    }
+
+    // 播放完畢或出錯時釋放 Promise
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+
+    window.speechSynthesis.speak(u);
+  });
+}
+
+// ==========================================
+// 體位播放串接主流程 (梵文 -> 自動切換指定指令)
+// ==========================================
+async function triggerPoseSpeech(item) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel(); // 終止前一個動作的殘留語音
+
   const langChoice = document.getElementById('voice-lang-select')?.value || 'zh';
   const enableSanskrit = document.getElementById('voice-sanskrit-toggle')?.checked ?? true;
 
+  // 1. 若有啟用梵文，先念修復後的梵文體位名
   if (enableSanskrit && item.sanskrit) {
-    // 使用平滑音標念梵文
-    const smoothSanskrit = sanitizeSanskritForSpeech(item.sanskrit);
-    speakVoice(smoothSanskrit, 'sa');
+    const phoneticSanskrit = getPhoneticSanskrit(item.sanskrit);
+    await speakAsync(phoneticSanskrit, 'sa');
+    // 短暫微頓 350 毫秒，製造典雅段落感
+    await new Promise(r => setTimeout(r, 350));
   }
 
-  setTimeout(() => {
-    let sideZh = '';
-    let sideEn = '';
-    if (item.selectedSide === 'left') { sideZh = '，左側'; sideEn = ', Left side'; }
-    if (item.selectedSide === 'right') { sideZh = '，右側'; sideEn = ', Right side'; }
+  // 計算換側提示文字
+  let sideZh = '';
+  let sideEn = '';
+  if (item.selectedSide === 'left') { sideZh = '，左側'; sideEn = ', Left side'; }
+  if (item.selectedSide === 'right') { sideZh = '，右側'; sideEn = ', Right side'; }
 
-    if (langChoice === 'en') {
-      const enText = item.cuesEn || item.cues;
-      speakVoice(`${item.en}${sideEn}. ${enText}`, 'en');
-    } else if (langChoice === 'dual') {
-      speakVoice(`${item.zh}${sideZh}。${item.en}。${item.cues}`, 'zh');
-    } else {
-      speakVoice(`${item.zh}${sideZh}。${item.cues}`, 'zh');
+  // 2. 依照所選語言，自動接續相應口令
+  if (langChoice === 'en') {
+    // 【純英文指令模式】
+    const enText = item.cuesEn || item.cues;
+    await speakAsync(`${item.en}${sideEn}. ${enText}`, 'en');
+  } else if (langChoice === 'dual') {
+    // 【中英雙語模式】
+    await speakAsync(`${item.zh}${sideZh}。${item.en}。${item.cues}`, 'zh');
+    if (item.cuesEn) {
+      await new Promise(r => setTimeout(r, 200));
+      await speakAsync(item.cuesEn, 'en');
     }
-  }, enableSanskrit ? 1600 : 100);
+  } else {
+    // 【純中文指令模式】
+    await speakAsync(`${item.zh}${sideZh}。${item.cues}`, 'zh');
+  }
 }
 
-// 介面 Tab 切換
+// 切換 Tab
 function switchTab(targetTab) {
   AppState.activeTab = targetTab;
   const libView = document.getElementById('view-library');
@@ -144,7 +186,7 @@ function switchTab(targetTab) {
   }
 }
 
-// 渲染動作庫 (中英文並列排版)
+// 渲染動作庫列表
 function renderPoseGrid() {
   const container = document.getElementById('pose-grid');
   if (!container || !window.YOGA_ASANAS) return;
@@ -187,7 +229,6 @@ function renderPoseGrid() {
             <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${tagBg}">${typeLabel}</span>
             ${p.chakras ? `<span class="text-[9px] text-stone-400 truncate max-w-[120px]">${p.chakras}</span>` : ''}
           </div>
-          <!-- 中英文並列顯示 -->
           <h4 class="font-bold text-xs text-stone-800 truncate">
             ${p.zh} <span class="text-stone-500 font-medium font-sans">/ ${p.en}</span>
           </h4>
@@ -238,7 +279,7 @@ function addPoseToCurrentSequence(poseId, side = 'both', duration = null) {
   renderSequenceList();
 }
 
-// 渲染序列清單 (中英並列)
+// 渲染序列列表
 function renderSequenceList() {
   const container = document.getElementById('sequence-container');
   const emptyState = document.getElementById('sequence-empty-state');
@@ -293,7 +334,7 @@ function renderSequenceList() {
           ${item.hasSideOption ? `
             <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5">
               <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側 (Both)</option>
-              <option value="left" ${item.selectedSide === 'left' ? 'selected' : ''}>左側 (Left)</option>
+              <option value="left" ${item.selectedSide === 'left' ? 'left' : ''}>左側 (Left)</option>
               <option value="right" ${item.selectedSide === 'right' ? 'selected' : ''}>右側 (Right)</option>
             </select>
           ` : '<span class="text-[10px] text-stone-400">對稱體位 (Both Sides)</span>'}
@@ -374,7 +415,7 @@ function updateSequenceStats() {
   if (timeEl) timeEl.innerText = `${min}m ${sec}s (${min}分${sec}秒)`;
 }
 
-// 核心操作：新建空白序列
+// 新建空白序列
 function createNewBlankSequence() {
   const name = prompt("請輸入新課表名稱 (Sequence Name)：", "自訂瑜珈課表 (Custom Flow)");
   if (name === null) return;
@@ -387,16 +428,16 @@ function createNewBlankSequence() {
   if (select) select.value = "";
 
   renderSequenceList();
-  showToast(`已建立空白序列 (Created): ${AppState.currentSequenceTitle}`);
+  showToast(`已建立空白序列: ${AppState.currentSequenceTitle}`);
 }
 
-// 核心操作：清空當前序列
+// 清空當前序列
 function clearCurrentSequence() {
   if (AppState.currentSequence.length === 0) {
     showToast("目前序列是空的 (Already Empty)！");
     return;
   }
-  if (confirm(`確定清空「${AppState.currentSequenceTitle}」的所有動作？(Clear all poses?)`)) {
+  if (confirm(`確定清空「${AppState.currentSequenceTitle}」的所有動作？`)) {
     AppState.currentSequence = [];
     renderSequenceList();
     showToast("已清空序列 (Cleared)！");
@@ -415,10 +456,10 @@ function loadPresetSequence(presetId) {
   AppState.currentSequence = [];
   found.poses.forEach(id => addPoseToCurrentSequence(id));
   renderSequenceList();
-  showToast(`已載入 (Loaded): ${found.name}`);
+  showToast(`已載入: ${found.name}`);
 }
 
-// 初始化 30 套官方課表分組下拉選單
+// 初始化課表下拉選單
 function refreshPresetDropdown() {
   const select = document.getElementById('preset-sequence-select');
   if (!select || !window.PRESET_SEQUENCES) return;
@@ -486,21 +527,36 @@ function loadCustomSequence(title) {
   showToast(`已載入自訂課表: ${title}`);
 }
 
-// 動作詳情 Modal (雙語呈現)
+// 動作詳情彈窗
 let activeModalPoseId = null;
 function openPoseModal(poseId) {
   const p = window.YOGA_ASANAS.find(x => x.id === poseId);
   if (!p) return;
   activeModalPoseId = p.id;
 
-  document.getElementById('modal-card-id').innerText = `#${p.code || p.id}`;
-  document.getElementById('modal-title').innerText = `${p.zh} • ${p.en}`;
-  document.getElementById('modal-sanskrit-name').innerText = p.sanskrit || '';
-  document.getElementById('modal-benefits').innerText = p.benefits || (p.meridians ? `經絡 (Meridians)：${p.meridians}。脈輪 (Chakras)：${p.chakras}` : '活化身心能量，舒展全身筋膜。');
-  document.getElementById('modal-cues-zh').innerText = p.cues;
-  document.getElementById('modal-cues-en').innerText = p.cuesEn || p.cues;
-  document.getElementById('modal-details').innerText = p.details || '保持呼吸綿密深長，沉浸在體位停留的放鬆感受中。';
-  document.getElementById('modal-precautions').innerText = p.precautions || '如有急性疼痛或身體不適，請隨時退出體位。';
+  const cardIdEl = document.getElementById('modal-card-id');
+  if (cardIdEl) cardIdEl.innerText = `#${p.code || p.id}`;
+  
+  const titleEl = document.getElementById('modal-title');
+  if (titleEl) titleEl.innerText = `${p.zh} • ${p.en}`;
+  
+  const sanskritEl = document.getElementById('modal-sanskrit-name');
+  if (sanskritEl) sanskritEl.innerText = p.sanskrit || '';
+  
+  const benefitsEl = document.getElementById('modal-benefits');
+  if (benefitsEl) benefitsEl.innerText = p.benefits || (p.meridians ? `經絡 (Meridians)：${p.meridians}。脈輪 (Chakras)：${p.chakras}` : '活化身心能量，舒展全身筋膜。');
+  
+  const cuesZhEl = document.getElementById('modal-cues-zh');
+  if (cuesZhEl) cuesZhEl.innerText = p.cues;
+  
+  const cuesEnEl = document.getElementById('modal-cues-en');
+  if (cuesEnEl) cuesEnEl.innerText = p.cuesEn || p.cues;
+  
+  const detailsEl = document.getElementById('modal-details');
+  if (detailsEl) detailsEl.innerText = p.details || '保持呼吸綿密深長，沉浸在體位停留的放鬆感受中。';
+  
+  const precautionsEl = document.getElementById('modal-precautions');
+  if (precautionsEl) precautionsEl.innerText = p.precautions || '如有急性疼痛或身體不適，請隨時退出體位。';
 
   document.getElementById('pose-detail-modal')?.classList.remove('hidden');
 }
@@ -509,7 +565,7 @@ function closePoseModal() {
   document.getElementById('pose-detail-modal')?.classList.add('hidden');
 }
 
-// 播放器邏輯 (中英文雙語同步呈現)
+// 播放器控制
 function startFlowPlayer() {
   if (AppState.currentSequence.length === 0) {
     alert("課表目前沒有體位，請先加入動作！");
@@ -545,24 +601,34 @@ function loadPlayerStep() {
   pState.secondsLeft = parseInt(currentItem.duration) || 30;
   pState.totalSeconds = pState.secondsLeft;
 
-  document.getElementById('player-seq-name').innerText = AppState.currentSequenceTitle;
-  document.getElementById('player-pose-index').innerText = `體位 ${pState.index + 1} / ${AppState.currentSequence.length} (Pose)`;
-  document.getElementById('player-sanskrit-tag').innerText = currentItem.sanskrit || '';
+  const seqNameEl = document.getElementById('player-seq-name');
+  if (seqNameEl) seqNameEl.innerText = AppState.currentSequenceTitle;
+
+  const poseIndexEl = document.getElementById('player-pose-index');
+  if (poseIndexEl) poseIndexEl.innerText = `體位 ${pState.index + 1} / ${AppState.currentSequence.length} (Pose)`;
+
+  const sanskritTagEl = document.getElementById('player-sanskrit-tag');
+  if (sanskritTagEl) sanskritTagEl.innerText = currentItem.sanskrit || '';
   
-  // 主標題中文、副標題英文
-  document.getElementById('player-pose-title-zh').innerText = currentItem.zh;
+  const titleZhEl = document.getElementById('player-pose-title-zh');
+  if (titleZhEl) titleZhEl.innerText = currentItem.zh;
 
   let sideStr = "雙側 (Both Sides)";
   if (currentItem.selectedSide === 'left') sideStr = "左側 (Left Side)";
   if (currentItem.selectedSide === 'right') sideStr = "右側 (Right Side)";
-  document.getElementById('player-pose-title-en').innerText = `${currentItem.en} • ${sideStr}`;
+  
+  const titleEnEl = document.getElementById('player-pose-title-en');
+  if (titleEnEl) titleEnEl.innerText = `${currentItem.en} • ${sideStr}`;
 
-  // 雙語口令展示
-  document.getElementById('player-cues-zh').innerHTML = `<strong class="text-amber-400 mr-1">【中】</strong>${currentItem.cues}`;
-  document.getElementById('player-cues-en').innerHTML = `<strong class="text-amber-500 mr-1 not-italic font-sans">【EN】</strong>${currentItem.cuesEn || currentItem.cues}`;
+  const cuesZhEl = document.getElementById('player-cues-zh');
+  if (cuesZhEl) cuesZhEl.innerHTML = `<strong class="text-amber-400 mr-1">【中】</strong>${currentItem.cues}`;
+
+  const cuesEnEl = document.getElementById('player-cues-en');
+  if (cuesEnEl) cuesEnEl.innerHTML = `<strong class="text-amber-500 mr-1 not-italic font-sans">【EN】</strong>${currentItem.cuesEn || currentItem.cues}`;
 
   const nextItem = AppState.currentSequence[pState.index + 1];
-  document.getElementById('player-next-pose-name').innerText = nextItem ? `${nextItem.zh} / ${nextItem.en}` : "全序列完成 (Namaste)";
+  const nextPoseEl = document.getElementById('player-next-pose-name');
+  if (nextPoseEl) nextPoseEl.innerText = nextItem ? `${nextItem.zh} / ${nextItem.en}` : "全序列完成 (Namaste)";
 
   playTibetanBowlSound();
   triggerPoseSpeech(currentItem);
@@ -607,6 +673,7 @@ function showToast(msg) {
   setTimeout(() => toast.classList.add('opacity-0'), 1800);
 }
 
+// 頁面載入初始化
 window.addEventListener('DOMContentLoaded', () => {
   try {
     const raw = localStorage.getItem('yoga_flow_custom_db');
