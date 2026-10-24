@@ -2,28 +2,63 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <!-- 關鍵 1：viewport-fit=cover 允許網頁延伸至安全區域並計算 env 邊距 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Yoga Flow Studio</title>
+  
+  <!-- 關鍵 2：iOS PWA / Web App 專屬設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- default 或 black-translucent 均可配合 safe-area 正確避開狀態列 -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#ffffff">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
-    body { font-family: 'Noto Sans TC', sans-serif; background-color: #FAF8F5; color: #2D3748; }
+    
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #FAF8F5;
+      color: #2D3748;
+      /* 確保全螢幕高度在各版本手機均精準貼齊，防止滾動溢出 */
+      height: 100vh;
+      height: 100dvh;
+    }
+
     .custom-scroll::-webkit-scrollbar { display: none; }
     .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* 關鍵 3：安全區域 CSS 邊距設定 */
+    /* 頂部導航列避開瀏海 / 動態島 / 狀態列 */
+    .app-header {
+      padding-top: max(0.625rem, env(safe-area-inset-top));
+    }
+
+    /* 底部導航分頁列避開 Home Indicator 滑動條，並確保觸控有效 */
+    .app-bottom-nav {
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    /* 全螢幕播放器內部邊距避開上下安全區 */
+    .player-safe-container {
+      padding-top: max(1rem, env(safe-area-inset-top));
+      padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    }
   </style>
 </head>
-<body class="flex flex-col h-screen overflow-hidden">
+<body class="flex flex-col overflow-hidden">
 
-  <!-- 頂部導航列 (Top Bar) -->
-  <header class="bg-white/95 backdrop-blur border-b border-stone-200 px-4 py-2.5 shrink-0 flex items-center justify-between z-20 shadow-sm">
+  <!-- 頂部導航列 (套用 app-header 避開狀態列) -->
+  <header class="app-header bg-white/95 backdrop-blur border-b border-stone-200 px-4 pb-2.5 shrink-0 flex items-center justify-between z-20 shadow-sm">
     <div class="flex items-center gap-2">
       <div class="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-800 flex items-center justify-center font-bold text-lg">
         <i class="ph-fill ph-flower-lotus"></i>
       </div>
       <div>
         <h1 class="font-bold text-sm text-stone-800 leading-tight">Yoga Flow Studio</h1>
-        <p class="text-[10px] text-stone-500"></p>
+        <p class="text-[10px] text-stone-500">雙側半時提醒 • 專業排課</p>
       </div>
     </div>
 
@@ -67,11 +102,10 @@
       <div id="pose-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 custom-scroll pb-24"></div>
     </div>
 
-    <!-- 視圖 2：序列編排 (Sequence Builder) - 乾淨重構版 -->
+    <!-- 視圖 2：序列編排 (Sequence Builder) -->
     <div id="view-sequence" class="w-full h-full flex flex-col bg-[#FAF8F5]">
-      <!-- 課表控制頂部：以選單為核心，下方整齊陳列體位與功能按鈕 -->
+      <!-- 課表控制頂部 -->
       <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2.5 shadow-sm">
-        <!-- 頂部直接呈現課表下拉選單 (與當前課表名稱完全一致) -->
         <div class="relative">
           <select id="preset-sequence-select" class="w-full text-xs font-semibold bg-stone-50 border border-stone-200 text-stone-800 rounded-xl px-3 py-2 pr-8 focus:ring-1 focus:ring-amber-500 appearance-none shadow-sm">
             <option value="">-- 載入官方推薦 / 自訂課表 (30 套) --</option>
@@ -79,15 +113,13 @@
           <i class="ph ph-caret-down absolute right-3 top-2.5 text-stone-400 pointer-events-none text-xs"></i>
         </div>
 
-        <!-- 功能按鈕與體位統計 (放置在下拉選單正下方) -->
+        <!-- 功能按鈕與體位統計 -->
         <div class="flex items-center justify-between gap-1.5 pt-0.5">
-          <!-- 左側：體位數與總時間 -->
           <div class="flex items-center gap-2 text-[11px] text-stone-500 min-w-0">
             <span id="seq-pose-count" class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold shrink-0">0 體位</span>
             <span class="truncate"><i class="ph ph-clock"></i> <strong id="seq-total-time" class="text-stone-700 font-semibold">0 分 0 秒</strong></span>
           </div>
 
-          <!-- 右側：功能按鈕組 -->
           <div class="flex items-center gap-1.5 shrink-0">
             <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition" title="新建空白序列">
               <i class="ph ph-plus"></i> 新建
@@ -121,16 +153,16 @@
     </div>
   </main>
 
-  <!-- 底部導航列 (Bottom Navigation) -->
-  <nav class="bg-white border-t border-stone-200 px-6 py-2 shrink-0 flex items-center justify-between z-30 shadow-lg">
-    <button id="tab-library" class="tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]">
+  <!-- 底部導航列 (套用 app-bottom-nav 避開 Home Indicator，確保按鈕可正常點擊) -->
+  <nav class="app-bottom-nav bg-white border-t border-stone-200 px-6 pt-2 shrink-0 flex items-center justify-between z-30 shadow-lg">
+    <button id="tab-library" class="tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px] py-1">
       <i class="ph-bold ph-books text-xl"></i>
       <span>動作庫</span>
     </button>
-    <button id="tab-sequence" class="tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative">
+    <button id="tab-sequence" class="tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative py-1">
       <i class="ph-fill ph-cards text-xl"></i>
       <span>編排序列</span>
-      <span id="tab-badge" class="hidden absolute -top-1 -right-2 w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">0</span>
+      <span id="tab-badge" class="hidden absolute -top-0.5 -right-2 w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">0</span>
     </button>
     <button id="tab-play" class="flex flex-col items-center gap-1 text-white bg-amber-700 hover:bg-amber-800 px-4 py-1.5 rounded-xl text-[11px] font-semibold shadow-md active:scale-95 transition">
       <i class="ph-fill ph-play text-base"></i>
@@ -368,8 +400,8 @@
     </div>
   </div>
 
-  <!-- 全螢幕播放器 (Player) - 支援換側動態提示標籤 -->
-  <div id="flow-player-modal" class="fixed inset-0 bg-stone-950 z-50 hidden flex flex-col text-white">
+  <!-- 全螢幕播放器 (Player) -->
+  <div id="flow-player-modal" class="fixed inset-0 bg-stone-950 z-50 hidden flex flex-col text-white player-safe-container">
     <div class="px-4 py-3 flex items-center justify-between border-b border-stone-800 shrink-0">
       <div>
         <h3 id="player-seq-name" class="font-bold text-xs text-stone-200 truncate max-w-[200px]">專注播放中</h3>
@@ -386,7 +418,6 @@
     </div>
 
     <div class="flex-1 flex flex-col items-center justify-center px-6 text-center relative">
-      <!-- 換側動態警示浮動標籤 (半時自動亮起) -->
       <div id="player-switch-side-banner" class="hidden absolute top-4 px-4 py-1.5 bg-amber-500 text-stone-950 font-bold rounded-full text-xs shadow-lg animate-bounce flex items-center gap-1.5 z-10">
         <i class="ph-bold ph-arrows-left-right"></i>
         <span>時間過半，請準備換側！(Switch Sides)</span>
@@ -419,7 +450,7 @@
     </div>
 
     <!-- 播放器控制列 -->
-    <div class="p-5 border-t border-stone-800 flex items-center justify-center gap-8 shrink-0 bg-stone-950 pb-8">
+    <div class="p-5 border-t border-stone-800 flex items-center justify-center gap-8 shrink-0 bg-stone-950">
       <button id="player-prev-btn" class="p-3 bg-stone-900 text-stone-300 rounded-full active:scale-90 transition">
         <i class="ph-fill ph-skip-back text-lg"></i>
       </button>
@@ -432,8 +463,8 @@
     </div>
   </div>
 
-  <script src="data/asanas.js?v=6.0"></script>
-  <script src="data/presets.js?v=6.0"></script>
-  <script src="js/app.js?v=6.0"></script>
+  <script src="data/asanas.js?v=7.0"></script>
+  <script src="data/presets.js?v=7.0"></script>
+  <script src="js/app.js?v=7.0"></script>
 </body>
 </html>
