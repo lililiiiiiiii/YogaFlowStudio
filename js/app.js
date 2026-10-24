@@ -1,5 +1,5 @@
 /**
- * Yoga Flow Studio - 核心邏輯 (修復 ID 對應與點擊事件)
+ * Yoga Flow Studio - 核心邏輯 (加入健全防呆與安全切換機制)
  */
 
 const AppState = {
@@ -28,7 +28,7 @@ function playTibetanBowlSound() {
       AppState.player.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     const ctx = AppState.player.audioCtx;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
     [188, 376, 564, 755].forEach((f, idx) => {
       const osc = ctx.createOscillator();
@@ -43,17 +43,14 @@ function playTibetanBowlSound() {
       osc.stop(now + 3.3);
     });
   } catch (e) {
-    console.warn(e);
+    console.warn("AudioContext init error:", e);
   }
 }
 
-// ==========================================
-// 梵文語音音素修復字典 (Phonetic Normalization)
-// ==========================================
+// 梵文語音音素修復
 function getPhoneticSanskrit(text) {
   if (!text) return '';
   return text
-    // 處理母音長音與特殊子音，轉換為 TTS 自然音素
     .replace(/ā/g, 'aa')
     .replace(/ī/g, 'ee')
     .replace(/ū/g, 'oo')
@@ -61,111 +58,98 @@ function getPhoneticSanskrit(text) {
     .replace(/ś/g, 'sh')
     .replace(/ṣ/g, 'sh')
     .replace(/c/g, 'ch')
-    // 針對常見字根做節奏斷詞優化
     .replace(/asana/gi, ' aasana')
     .replace(/svana/gi, 'shvana')
     .replace(/mukha/gi, 'mookha')
     .replace(/adho/gi, 'ud-ho')
     .replace(/baddha/gi, 'bud-dha')
     .replace(/virabhadra/gi, 'veera-bhadra')
-    .replace(/matsyendra/gi, 'mut-syendra')
-    .replace(/sarvanga/gi, 'sarv-aanga')
     .trim();
 }
 
-// ==========================================
-// Promise 式語音合成播放器 (防止中斷與重疊)
-// ==========================================
-function speakAsync(text, lang = 'zh') {
+// 帶超時保護的語音播放
+function speakAsync(text, lang = 'zh', timeoutMs = 6000) {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window) || !text) {
       resolve();
       return;
     }
 
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = window.speechSynthesis.getVoices();
+    let isDone = false;
+    const safeResolve = () => {
+      if (!isDone) {
+        isDone = true;
+        resolve();
+      }
+    };
 
-    if (lang === 'sa') {
-      // 梵文：優先尋找印地語/梵語/拉丁系優質語音包
-      const sanskritVoice = voices.find(v => 
-        v.lang === 'sa-IN' || 
-        v.lang === 'hi-IN' || 
-        v.lang.startsWith('hi') || 
-        v.name.includes('India') || 
-        v.lang === 'it-IT'
-      );
-      if (sanskritVoice) u.voice = sanskritVoice;
-      u.lang = 'hi-IN';
-      u.rate = 0.80; // 沉穩且字字分明
-      u.pitch = 0.92;
-    } else if (lang === 'en') {
-      // 英文：選用標準美語自然語音
-      const enVoice = voices.find(v => v.lang === 'en-US' && (v.name.includes('Natural') || v.name.includes('Samantha')));
-      if (enVoice) u.voice = enVoice;
-      u.lang = 'en-US';
-      u.rate = 0.90;
-      u.pitch = 1.0;
-    } else {
-      // 中文：標準繁體中文語音
-      const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.startsWith('zh'));
-      if (zhVoice) u.voice = zhVoice;
-      u.lang = 'zh-TW';
-      u.rate = 0.92;
-      u.pitch = 1.0;
+    const timer = setTimeout(safeResolve, timeoutMs);
+
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+
+      if (lang === 'sa') {
+        const sanskritVoice = voices.find(v => 
+          v.lang === 'sa-IN' || v.lang === 'hi-IN' || v.lang.startsWith('hi') || v.lang === 'it-IT'
+        );
+        if (sanskritVoice) u.voice = sanskritVoice;
+        u.lang = 'hi-IN';
+        u.rate = 0.80;
+        u.pitch = 0.92;
+      } else if (lang === 'en') {
+        const enVoice = voices.find(v => v.lang === 'en-US' && (v.name.includes('Natural') || v.name.includes('Samantha')));
+        if (enVoice) u.voice = enVoice;
+        u.lang = 'en-US';
+        u.rate = 0.90;
+      } else {
+        const zhVoice = voices.find(v => v.lang === 'zh-TW' || v.lang.startsWith('zh'));
+        if (zhVoice) u.voice = zhVoice;
+        u.lang = 'zh-TW';
+        u.rate = 0.92;
+      }
+
+      u.onend = () => { clearTimeout(timer); safeResolve(); };
+      u.onerror = () => { clearTimeout(timer); safeResolve(); };
+
+      window.speechSynthesis.speak(u);
+    } catch (err) {
+      clearTimeout(timer);
+      safeResolve();
     }
-
-    // 播放完畢或出錯時釋放 Promise
-    u.onend = () => resolve();
-    u.onerror = () => resolve();
-
-    window.speechSynthesis.speak(u);
   });
 }
 
-// ==========================================
-// 體位播放串接主流程 (梵文 -> 自動切換指定指令)
-// ==========================================
+// 播放體位語音流程
 async function triggerPoseSpeech(item) {
   if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel(); // 終止前一個動作的殘留語音
+  window.speechSynthesis.cancel();
 
-  const langChoice = document.getElementById('voice-lang-select')?.value || 'zh';
+  const langChoice = document.getElementById('voice-lang-select')?.value || 'dual';
   const enableSanskrit = document.getElementById('voice-sanskrit-toggle')?.checked ?? true;
 
-  // 1. 若有啟用梵文，先念修復後的梵文體位名
   if (enableSanskrit && item.sanskrit) {
-    const phoneticSanskrit = getPhoneticSanskrit(item.sanskrit);
-    await speakAsync(phoneticSanskrit, 'sa');
-    // 短暫微頓 350 毫秒，製造典雅段落感
-    await new Promise(r => setTimeout(r, 350));
+    const phonetic = getPhoneticSanskrit(item.sanskrit);
+    await speakAsync(phonetic, 'sa', 3500);
+    await new Promise(r => setTimeout(r, 200));
   }
 
-  // 計算換側提示文字
   let sideZh = '';
   let sideEn = '';
   if (item.selectedSide === 'left') { sideZh = '，左側'; sideEn = ', Left side'; }
   if (item.selectedSide === 'right') { sideZh = '，右側'; sideEn = ', Right side'; }
 
-  // 2. 依照所選語言，自動接續相應口令
   if (langChoice === 'en') {
-    // 【純英文指令模式】
     const enText = item.cuesEn || item.cues;
-    await speakAsync(`${item.en}${sideEn}. ${enText}`, 'en');
+    await speakAsync(`${item.en}${sideEn}. ${enText}`, 'en', 7000);
   } else if (langChoice === 'dual') {
-    // 【中英雙語模式】
-    await speakAsync(`${item.zh}${sideZh}。${item.en}。${item.cues}`, 'zh');
-    if (item.cuesEn) {
-      await new Promise(r => setTimeout(r, 200));
-      await speakAsync(item.cuesEn, 'en');
-    }
+    await speakAsync(`${item.zh}${sideZh}。${item.en}。${item.cues}`, 'zh', 8000);
   } else {
-    // 【純中文指令模式】
-    await speakAsync(`${item.zh}${sideZh}。${item.cues}`, 'zh');
+    await speakAsync(`${item.zh}${sideZh}。${item.cues}`, 'zh', 7000);
   }
 }
 
-// 切換 Tab
+// 分頁切換 (安全容錯版本)
 function switchTab(targetTab) {
   AppState.activeTab = targetTab;
   const libView = document.getElementById('view-library');
@@ -174,34 +158,36 @@ function switchTab(targetTab) {
   const btnSeq = document.getElementById('tab-sequence');
 
   if (targetTab === 'library') {
-    libView.classList.remove('hidden');
-    seqView.classList.add('hidden');
-    btnLib.className = 'tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px]';
-    btnSeq.className = 'tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px] relative';
+    if (libView) libView.classList.remove('hidden');
+    if (seqView) seqView.classList.add('hidden');
+    if (btnLib) btnLib.className = 'tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px]';
+    if (btnSeq) btnSeq.className = 'tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px] relative';
   } else {
-    libView.classList.add('hidden');
-    seqView.classList.remove('hidden');
-    btnSeq.className = 'tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative';
-    btnLib.className = 'tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]';
+    if (libView) libView.classList.add('hidden');
+    if (seqView) seqView.classList.remove('hidden');
+    if (btnSeq) btnSeq.className = 'tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative';
+    if (btnLib) btnLib.className = 'tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]';
   }
 }
 
 // 渲染動作庫列表
 function renderPoseGrid() {
   const container = document.getElementById('pose-grid');
-  if (!container || !window.YOGA_ASANAS) return;
+  if (!container) return;
+
+  const asanasList = window.YOGA_ASANAS || [];
   container.innerHTML = '';
 
-  const filtered = window.YOGA_ASANAS.filter(p => {
+  const filtered = asanasList.filter(p => {
     const matchType = (AppState.activeFilterType === 'all') || (p.type === AppState.activeFilterType);
     const search = AppState.activeSearchKeyword.toLowerCase().trim();
     const matchSearch = !search ||
-      p.zh.toLowerCase().includes(search) ||
-      p.en.toLowerCase().includes(search) ||
+      (p.zh && p.zh.toLowerCase().includes(search)) ||
+      (p.en && p.en.toLowerCase().includes(search)) ||
       (p.sanskrit && p.sanskrit.toLowerCase().includes(search)) ||
       (p.chakras && p.chakras.toLowerCase().includes(search)) ||
       (p.meridians && p.meridians.toLowerCase().includes(search)) ||
-      p.cues.toLowerCase().includes(search);
+      (p.cues && p.cues.toLowerCase().includes(search));
     return matchType && matchSearch;
   });
 
@@ -250,16 +236,17 @@ function renderPoseGrid() {
     card.querySelectorAll('.btn-open-detail').forEach(el => el.addEventListener('click', () => openPoseModal(p.id)));
     card.querySelector('.btn-add-pose').addEventListener('click', () => {
       addPoseToCurrentSequence(p.id);
-      showToast(`已加入: ${p.zh} (${p.en})`);
+      showToast(`已加入: ${p.zh}`);
     });
 
     container.appendChild(card);
   });
 }
 
-// 加入體位至序列
+// 加入體位到當前序列
 function addPoseToCurrentSequence(poseId, side = 'both', duration = null) {
-  const p = window.YOGA_ASANAS.find(x => x.id === poseId);
+  const asanasList = window.YOGA_ASANAS || [];
+  const p = asanasList.find(x => x.id === poseId);
   if (!p) return;
 
   AppState.currentSequence.push({
@@ -279,7 +266,7 @@ function addPoseToCurrentSequence(poseId, side = 'both', duration = null) {
   renderSequenceList();
 }
 
-// 渲染序列列表
+// 渲染序列清單
 function renderSequenceList() {
   const container = document.getElementById('sequence-container');
   const emptyState = document.getElementById('sequence-empty-state');
@@ -334,7 +321,7 @@ function renderSequenceList() {
           ${item.hasSideOption ? `
             <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5">
               <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側 (Both)</option>
-              <option value="left" ${item.selectedSide === 'left' ? 'left' : ''}>左側 (Left)</option>
+              <option value="left" ${item.selectedSide === 'left' ? 'selected' : ''}>左側 (Left)</option>
               <option value="right" ${item.selectedSide === 'right' ? 'selected' : ''}>右側 (Right)</option>
             </select>
           ` : '<span class="text-[10px] text-stone-400">對稱體位 (Both Sides)</span>'}
@@ -431,7 +418,7 @@ function createNewBlankSequence() {
   showToast(`已建立空白序列: ${AppState.currentSequenceTitle}`);
 }
 
-// 清空當前序列
+// 清空序列
 function clearCurrentSequence() {
   if (AppState.currentSequence.length === 0) {
     showToast("目前序列是空的 (Already Empty)！");
@@ -446,7 +433,8 @@ function clearCurrentSequence() {
 
 // 載入預設課表
 function loadPresetSequence(presetId) {
-  const found = window.PRESET_SEQUENCES.find(p => p.id === presetId);
+  const presetList = window.PRESET_SEQUENCES || [];
+  const found = presetList.find(p => p.id === presetId);
   if (!found) return;
 
   AppState.currentSequenceTitle = found.name;
@@ -454,19 +442,23 @@ function loadPresetSequence(presetId) {
   if (titleInput) titleInput.value = found.name;
 
   AppState.currentSequence = [];
-  found.poses.forEach(id => addPoseToCurrentSequence(id));
+  if (Array.isArray(found.poses)) {
+    found.poses.forEach(id => addPoseToCurrentSequence(id));
+  }
   renderSequenceList();
   showToast(`已載入: ${found.name}`);
 }
 
-// 初始化課表下拉選單
+// 下拉選單分組渲染
 function refreshPresetDropdown() {
   const select = document.getElementById('preset-sequence-select');
-  if (!select || !window.PRESET_SEQUENCES) return;
+  if (!select) return;
+
+  const presetList = window.PRESET_SEQUENCES || [];
   select.innerHTML = '<option value="">-- 載入官方課表 / 自訂庫 (Load Presets - 30 Flows) --</option>';
 
   const topicMap = {};
-  window.PRESET_SEQUENCES.forEach(ps => {
+  presetList.forEach(ps => {
     const t = ps.topic || '官方推薦課表';
     if (!topicMap[t]) topicMap[t] = [];
     topicMap[t].push(ps);
@@ -527,10 +519,11 @@ function loadCustomSequence(title) {
   showToast(`已載入自訂課表: ${title}`);
 }
 
-// 動作詳情彈窗
+// 動作詳情 Modal
 let activeModalPoseId = null;
 function openPoseModal(poseId) {
-  const p = window.YOGA_ASANAS.find(x => x.id === poseId);
+  const asanasList = window.YOGA_ASANAS || [];
+  const p = asanasList.find(x => x.id === poseId);
   if (!p) return;
   activeModalPoseId = p.id;
 
@@ -565,7 +558,7 @@ function closePoseModal() {
   document.getElementById('pose-detail-modal')?.classList.add('hidden');
 }
 
-// 播放器控制
+// 播放器核心
 function startFlowPlayer() {
   if (AppState.currentSequence.length === 0) {
     alert("課表目前沒有體位，請先加入動作！");
@@ -580,13 +573,25 @@ function startFlowPlayer() {
 
 function closeFlowPlayer() {
   AppState.player.isOpen = false;
-  clearInterval(AppState.player.timerId);
-  window.speechSynthesis.cancel();
+  if (AppState.player.timerId) {
+    clearInterval(AppState.player.timerId);
+    AppState.player.timerId = null;
+  }
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
   document.getElementById('flow-player-modal')?.classList.add('hidden');
 }
 
 function loadPlayerStep() {
-  clearInterval(AppState.player.timerId);
+  if (AppState.player.timerId) {
+    clearInterval(AppState.player.timerId);
+    AppState.player.timerId = null;
+  }
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+
   const pState = AppState.player;
 
   if (pState.index >= AppState.currentSequence.length) {
@@ -638,8 +643,10 @@ function loadPlayerStep() {
     if (!pState.isPaused) {
       pState.secondsLeft--;
       updatePlayerProgress();
+
       if (pState.secondsLeft <= 0) {
         clearInterval(pState.timerId);
+        pState.timerId = null;
         pState.index++;
         loadPlayerStep();
       }
@@ -673,17 +680,23 @@ function showToast(msg) {
   setTimeout(() => toast.classList.add('opacity-0'), 1800);
 }
 
-// 頁面載入初始化
+// 初始化生命週期
 window.addEventListener('DOMContentLoaded', () => {
   try {
     const raw = localStorage.getItem('yoga_flow_custom_db');
     if (raw) AppState.customSequences = JSON.parse(raw);
   } catch (e) {}
 
+  // 1. 初始化選單與動作庫
   refreshPresetDropdown();
   renderPoseGrid();
-  loadPresetSequence('hips_l1');
 
+  // 2. 預設載入開髖 Level 1
+  if (window.PRESET_SEQUENCES && window.PRESET_SEQUENCES.length > 0) {
+    loadPresetSequence('hips_l1');
+  }
+
+  // 3. 課表下拉選單監聽
   document.getElementById('preset-sequence-select')?.addEventListener('change', (e) => {
     const val = e.target.value;
     if (!val) return;
@@ -691,11 +704,13 @@ window.addEventListener('DOMContentLoaded', () => {
     else if (val.startsWith('custom_')) loadCustomSequence(val.replace('custom_', ''));
   });
 
+  // 4. 頂部快捷按鈕
   document.getElementById('btn-quick-new')?.addEventListener('click', createNewBlankSequence);
   document.getElementById('btn-quick-clear')?.addEventListener('click', clearCurrentSequence);
   document.getElementById('btn-quick-save')?.addEventListener('click', saveCurrentCustomSequence);
   document.getElementById('btn-empty-goto-lib')?.addEventListener('click', () => switchTab('library'));
 
+  // 5. 陰陽過濾按鈕
   document.querySelectorAll('.type-filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.type-filter-btn').forEach(b => {
@@ -707,13 +722,19 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // 6. 搜尋框監聽
   document.getElementById('search-input')?.addEventListener('input', (e) => {
     AppState.activeSearchKeyword = e.target.value;
     renderPoseGrid();
   });
 
-  document.getElementById('tab-library')?.addEventListener('click', () => switchTab('library'));
-  document.getElementById('tab-sequence')?.addEventListener('click', () => switchTab('sequence'));
+  // 7. 底部 Tab 鍵 (強制保證點擊切換生效)
+  const tabLib = document.getElementById('tab-library');
+  const tabSeq = document.getElementById('tab-sequence');
+  if (tabLib) tabLib.onclick = () => switchTab('library');
+  if (tabSeq) tabSeq.onclick = () => switchTab('sequence');
+
+  // 8. 彈窗關閉與加入
   document.getElementById('modal-close-btn')?.addEventListener('click', closePoseModal);
   document.getElementById('modal-add-btn')?.addEventListener('click', () => {
     if (activeModalPoseId) {
@@ -723,17 +744,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // 9. 播放器控制鍵
   document.getElementById('tab-play')?.addEventListener('click', startFlowPlayer);
   document.getElementById('player-close-btn')?.addEventListener('click', closeFlowPlayer);
   document.getElementById('player-sound-test')?.addEventListener('click', playTibetanBowlSound);
+  
   document.getElementById('player-toggle-btn')?.addEventListener('click', () => {
     AppState.player.isPaused = !AppState.player.isPaused;
     const icon = document.getElementById('player-toggle-icon');
     if (icon) icon.className = AppState.player.isPaused ? 'ph-fill ph-play text-2xl' : 'ph-fill ph-pause text-2xl';
   });
+
   document.getElementById('player-prev-btn')?.addEventListener('click', () => {
-    if (AppState.player.index > 0) { AppState.player.index--; loadPlayerStep(); }
+    if (AppState.player.index > 0) {
+      AppState.player.index--;
+      loadPlayerStep();
+    }
   });
+
   document.getElementById('player-next-btn')?.addEventListener('click', () => {
     AppState.player.index++;
     loadPlayerStep();
