@@ -16,27 +16,27 @@
 <body class="flex flex-col h-screen overflow-hidden">
 
   <!-- 頂部導航列 (Top Bar) -->
-  <header class="bg-white/95 backdrop-blur border-b border-stone-200 px-4 py-2.5 shrink-0 flex items-center justify-between z-20">
+  <header class="bg-white/95 backdrop-blur border-b border-stone-200 px-4 py-2.5 shrink-0 flex items-center justify-between z-20 shadow-sm">
     <div class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-lg bg-amber-600/10 text-amber-800 flex items-center justify-center font-bold text-lg">
+      <div class="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-800 flex items-center justify-center font-bold text-lg">
         <i class="ph-fill ph-flower-lotus"></i>
       </div>
       <div>
         <h1 class="font-bold text-sm text-stone-800 leading-tight">Yoga Flow Studio</h1>
-        <p class="text-[10px] text-stone-500">142 Poses • 雙語對照</p>
+        <p class="text-[10px] text-stone-500">自訂動作與雙語序列系統</p>
       </div>
     </div>
 
     <!-- 語音播報設定 -->
     <div class="flex items-center gap-2">
       <select id="voice-lang-select" class="text-[11px] bg-stone-100 border border-stone-200 text-stone-700 rounded-lg px-2 py-1 focus:ring-0">
-        <option value="dual">中英雙語 (Bilingual)</option>
-        <option value="zh">中文口令 (Chinese)</option>
+        <option value="dual">中英雙語</option>
+        <option value="zh">中文口令</option>
         <option value="en">English Cues</option>
       </select>
       <label class="flex items-center gap-1 text-[11px] text-stone-600 bg-stone-100 border border-stone-200 px-2 py-1 rounded-lg cursor-pointer">
         <input type="checkbox" id="voice-sanskrit-toggle" checked class="rounded text-amber-600 focus:ring-amber-500 w-3 h-3">
-        <span>梵文 (Sanskrit)</span>
+        <span>梵文</span>
       </label>
     </div>
   </header>
@@ -44,16 +44,26 @@
   <main class="flex-1 overflow-hidden relative">
     <!-- 視圖 1：動作庫 (Pose Library) -->
     <div id="view-library" class="hidden w-full h-full flex flex-col bg-white">
-      <div class="p-3 border-b border-stone-100 space-y-2 shrink-0 bg-stone-50/50">
-        <div class="relative">
-          <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-sm"></i>
-          <input type="text" id="search-input" placeholder="Search poses, Sanskrit, Cues (搜尋名稱/梵文/口令)..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
+      <div class="p-3 border-b border-stone-100 space-y-2 shrink-0 bg-stone-50/70">
+        <!-- 搜尋列與【新增自訂動作】按鈕 -->
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-sm"></i>
+            <input type="text" id="search-input" placeholder="搜尋動作、梵文、經絡或口令..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
+          </div>
+          <!-- 【新增動作按鈕】 -->
+          <button id="btn-create-pose" class="px-2.5 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shrink-0 shadow-sm transition active:scale-95" title="新增自訂體位動作卡片">
+            <i class="ph ph-plus-circle text-sm"></i>
+            <span>新增動作</span>
+          </button>
         </div>
-        <!-- 陰陽風格快速切換 -->
+
+        <!-- 陰陽風格切換標籤 -->
         <div class="flex items-center gap-2 text-xs">
-          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-amber-800 text-white" data-type="all">全部 All (142)</button>
-          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yang">陽流動 Yang (82)</button>
-          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yin">陰瑜珈 Yin (60)</button>
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-amber-800 text-white" data-type="all">全部 (All)</button>
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yang">陽流動 (Yang)</button>
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="yin">陰瑜珈 (Yin)</button>
+          <button class="type-filter-btn px-3 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-100 text-stone-600" data-type="custom">自訂動作</button>
         </div>
       </div>
       <div id="pose-grid" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 custom-scroll pb-24"></div>
@@ -61,48 +71,50 @@
 
     <!-- 視圖 2：序列編排 (Sequence Builder) -->
     <div id="view-sequence" class="w-full h-full flex flex-col bg-[#FAF8F5]">
-      <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2.5 shadow-sm">
+      <!-- 課表控制頂部卡片 -->
+      <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2 shadow-sm">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 flex-1 min-w-0">
-            <input type="text" id="sequence-title-input" value="自訂練習課表 (Custom Flow)" class="font-bold text-sm bg-transparent border-0 border-b border-transparent focus:border-amber-600 focus:ring-0 p-0 text-stone-800 flex-1 truncate">
-            <span id="seq-pose-count" class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold shrink-0">0 Poses</span>
+            <input type="text" id="sequence-title-input" value="自訂練習課表" class="font-bold text-sm bg-transparent border-0 border-b border-transparent focus:border-amber-600 focus:ring-0 p-0 text-stone-800 flex-1 truncate">
+            <span id="seq-pose-count" class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold shrink-0">0 體位</span>
           </div>
-          <!-- 快捷按鈕：新建 / 儲存 / 清空 -->
+          <!-- 快捷操作按鈕 -->
           <div class="flex items-center gap-1.5 shrink-0">
-            <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition" title="New Sequence">
-              <i class="ph ph-plus"></i> 新建 (New)
+            <button id="btn-quick-new" class="text-xs px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium rounded-lg flex items-center gap-1 transition">
+              <i class="ph ph-plus"></i> 新建
             </button>
-            <button id="btn-quick-save" class="text-xs px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-lg flex items-center gap-1 transition shadow-sm" title="Save Flow">
-              <i class="ph ph-floppy-disk"></i> 儲存 (Save)
+            <button id="btn-quick-save" class="text-xs px-2.5 py-1 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-lg flex items-center gap-1 transition shadow-sm">
+              <i class="ph ph-floppy-disk"></i> 儲存
             </button>
-            <button id="btn-quick-clear" class="text-xs px-2 py-1 text-stone-400 hover:text-rose-600 rounded-lg transition" title="Clear All Poses">
+            <button id="btn-quick-clear" class="text-xs px-2 py-1 text-stone-400 hover:text-rose-600 rounded-lg transition" title="清空全部動作">
               <i class="ph ph-trash"></i>
             </button>
           </div>
         </div>
 
-        <!-- 官方 30 套課表與自訂課表選單 -->
+        <!-- 官方 30 套課表與自訂選單 -->
         <div class="relative">
-          <select id="preset-sequence-select" class="w-full text-xs bg-stone-50 border border-stone-200 text-stone-700 rounded-xl px-3 py-1.5 pr-8 focus:ring-1 focus:ring-amber-500 appearance-none font-medium">
-            <option value="">-- 載入官方課表 / 自訂庫 (Load Presets) --</option>
+          <select id="preset-sequence-select" class="w-full text-xs bg-stone-50 border border-stone-200 text-stone-700 rounded-xl px-3 py-2 pr-8 focus:ring-1 focus:ring-amber-500 appearance-none font-medium">
+            <option value="">-- 載入官方推薦 / 自訂課表 (30 套) --</option>
           </select>
-          <i class="ph ph-caret-down absolute right-2.5 top-2.5 text-stone-400 pointer-events-none text-xs"></i>
+          <i class="ph ph-caret-down absolute right-3 top-2.5 text-stone-400 pointer-events-none text-xs"></i>
         </div>
 
         <div class="text-[11px] text-stone-500 flex items-center justify-between pt-0.5">
-          <span class="flex items-center gap-1"><i class="ph ph-clock"></i> 總時長 (Duration): <strong id="seq-total-time" class="text-stone-700 font-semibold">0m 0s</strong></span>
+          <span class="flex items-center gap-1"><i class="ph ph-clock"></i> 預估總時長: <strong id="seq-total-time" class="text-stone-700 font-semibold">0 分 0 秒</strong></span>
         </div>
       </div>
 
+      <!-- 序列卡片清單 -->
       <div id="sequence-container" class="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scroll pb-28">
         <div id="sequence-empty-state" class="h-full flex flex-col items-center justify-center text-stone-400 py-16 px-6 text-center">
           <div class="w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center text-2xl mb-2 text-stone-400">
             <i class="ph ph-sparkle"></i>
           </div>
-          <p class="text-xs font-semibold text-stone-600">目前課表是空的 (Sequence is Empty)</p>
-          <p class="text-[11px] text-stone-400 mt-1">載入上方經典課表，或切換到「動作庫」挑選體位加入！</p>
+          <p class="text-xs font-semibold text-stone-600">目前課表是空的</p>
+          <p class="text-[11px] text-stone-400 mt-1">載入上方官方課表，或切換至「動作庫」挑選體位加入！</p>
           <button id="btn-empty-goto-lib" class="mt-4 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
-            <i class="ph ph-books"></i> 挑選動作 (Add Poses)
+            <i class="ph ph-books"></i> 挑選動作加入
           </button>
         </div>
       </div>
@@ -113,33 +125,33 @@
   <nav class="bg-white border-t border-stone-200 px-6 py-2 shrink-0 flex items-center justify-between z-30 shadow-lg">
     <button id="tab-library" class="tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]">
       <i class="ph-bold ph-books text-xl"></i>
-      <span>動作庫 (Library)</span>
+      <span>動作庫</span>
     </button>
     <button id="tab-sequence" class="tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative">
       <i class="ph-fill ph-cards text-xl"></i>
-      <span>編排序列 (Sequence)</span>
+      <span>編排序列</span>
       <span id="tab-badge" class="hidden absolute -top-1 -right-2 w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">0</span>
     </button>
     <button id="tab-play" class="flex flex-col items-center gap-1 text-white bg-amber-700 hover:bg-amber-800 px-4 py-1.5 rounded-xl text-[11px] font-semibold shadow-md active:scale-95 transition">
       <i class="ph-fill ph-play text-base"></i>
-      <span>開始播放 (Play)</span>
+      <span>引導播放</span>
     </button>
   </nav>
 
-  <!-- 動作詳情 Modal (雙語對照) -->
+  <!-- 動作詳情 Modal -->
   <div id="pose-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
     <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[88vh] overflow-hidden flex flex-col shadow-2xl">
-      <div class="p-4 border-b border-stone-100 flex items-start justify-between bg-stone-50/70">
+      <div class="p-4 border-b border-stone-100 flex items-start justify-between bg-stone-50/80">
         <div>
           <div class="flex items-center gap-2">
             <span id="modal-card-id" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-200 text-stone-700">#01</span>
-            <h2 id="modal-title" class="font-bold text-base text-stone-800">中文名稱 • English Name</h2>
+            <h2 id="modal-title-zh" class="font-bold text-base text-stone-800">體位中文名</h2>
           </div>
-          <p id="modal-sanskrit-name" class="text-xs text-amber-800 italic font-serif mt-0.5">Sanskrit Name</p>
+          <p id="modal-title-en" class="text-xs text-stone-500 font-medium mt-0.5">Pose English Name</p>
+          <p id="modal-sanskrit-name" class="text-xs text-amber-800 italic font-serif">Sanskrit</p>
         </div>
         <div class="flex items-center gap-1">
-          <!-- 補回語音試聽按鈕 -->
-          <button id="modal-voice-btn" class="p-2 text-stone-500 hover:text-amber-700 rounded-full" title="試聽語音 (Listen)">
+          <button id="modal-voice-btn" class="p-2 text-stone-500 hover:text-amber-700 rounded-full" title="試聽發音">
             <i class="ph-fill ph-speaker-high text-lg"></i>
           </button>
           <button id="modal-close-btn" class="p-2 text-stone-400 hover:text-stone-700 rounded-full">
@@ -150,36 +162,189 @@
 
       <div class="p-4 overflow-y-auto space-y-3 custom-scroll text-xs leading-relaxed">
         <div>
-          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-target text-amber-600"></i> 解剖效益與經絡 (Benefits & Meridians)</h4>
+          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-target text-amber-600"></i> 解剖效益與經絡</h4>
           <p id="modal-benefits" class="text-stone-600 bg-amber-50/60 p-2.5 rounded-xl border border-amber-100/70"></p>
         </div>
         <div>
-          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-compass text-amber-600"></i> 中文引導口令 (Chinese Cues)</h4>
+          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-compass text-amber-600"></i> 中文引導口令</h4>
           <p id="modal-cues-zh" class="text-stone-600 bg-stone-50 p-2.5 rounded-xl border border-stone-200/60"></p>
         </div>
         <div>
-          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-chat-teardrop-text text-amber-600"></i> 英文原版引導 (English Cues)</h4>
+          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-chat-teardrop-text text-amber-600"></i> 英文對照口令 (English Cues)</h4>
           <p id="modal-cues-en" class="text-stone-600 bg-stone-50 p-2.5 rounded-xl border border-stone-200/60 font-serif italic"></p>
         </div>
         <div>
-          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-lightbulb text-amber-600"></i> 對位細節 (Alignment Details)</h4>
+          <h4 class="font-bold text-stone-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-lightbulb text-amber-600"></i> 對位細節</h4>
           <p id="modal-details" class="text-stone-600"></p>
         </div>
         <div>
-          <h4 class="font-bold text-rose-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-warning-circle"></i> 注意事項與禁忌 (Precautions)</h4>
+          <h4 class="font-bold text-rose-700 mb-1 flex items-center gap-1"><i class="ph-fill ph-warning-circle"></i> 注意事項與禁忌</h4>
           <p id="modal-precautions" class="text-rose-900 bg-rose-50/70 p-2.5 rounded-xl border border-rose-200/50"></p>
         </div>
       </div>
 
       <div class="p-3 bg-stone-50 border-t border-stone-100 flex items-center justify-end">
         <button id="modal-add-btn" class="w-full py-2.5 bg-amber-700 hover:bg-amber-800 text-white font-medium rounded-xl text-xs flex items-center justify-center gap-1 shadow">
-          <i class="ph ph-plus-circle text-base"></i> 加入當前序列 (Add to Sequence)
+          <i class="ph ph-plus-circle text-base"></i> 加入當前序列
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 全螢幕雙語播放器 (Bilingual Flow Player) -->
+  <!-- 【新增自訂動作卡片 Modal】 (Create Custom Pose Modal) -->
+  <div id="pose-create-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
+        <div class="flex items-center gap-2">
+          <i class="ph-fill ph-plus-circle text-amber-700 text-lg"></i>
+          <h3 class="font-bold text-sm text-stone-800">建立自訂體位動作 (Create New Pose)</h3>
+        </div>
+        <button id="create-modal-close" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-full">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-3 custom-scroll text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">類型風格</label>
+            <select id="create-input-type" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+              <option value="yang">陽流動 (Yang / Dynamic)</option>
+              <option value="yin">陰瑜珈 (Yin / Passive)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">體位分類</label>
+            <select id="create-input-category" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+              <option value="warmup">暖身脊椎 (Warm Up)</option>
+              <option value="standing">站姿下肢 (Standing)</option>
+              <option value="balance">平衡體位 (Balance)</option>
+              <option value="backbend">後彎開胸 (Backbend)</option>
+              <option value="inversion">倒立調息 (Inversion)</option>
+              <option value="armbalance">手臂支撐 (Arm Balance)</option>
+              <option value="seated">坐姿開髖 (Seated)</option>
+              <option value="cooldown">收尾修復 (Cooldown)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">中文名稱 *</label>
+            <input type="text" id="create-input-zh" placeholder="例: 仰臥開胸英雄式" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">英文名稱</label>
+            <input type="text" id="create-input-en" placeholder="例: Supported Saddle" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">梵文名稱 (Sanskrit)</label>
+            <input type="text" id="create-input-sanskrit" placeholder="例: Supta Virasana Var." class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 italic">
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">預設停留秒數</label>
+            <input type="number" id="create-input-duration" value="60" min="5" max="900" step="5" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 font-semibold text-amber-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-600 mb-1">換側設定</label>
+          <select id="create-input-side" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+            <option value="both">對稱體位 (無須分側)</option>
+            <option value="dual">需分左右側練習 (Left / Right)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-600 mb-1">解剖效益 / 經絡脈輪</label>
+          <input type="text" id="create-input-benefits" placeholder="例: 伸展股四頭肌，疏通胃經與脾經，活化臍輪。" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">中文引導口令 (Chinese Cues) *</label>
+          <textarea id="create-input-cues-zh" rows="2" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-amber-500 leading-relaxed" placeholder="輸入此動作的指導詞..."></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">英文引導口令 (English Cues)</label>
+          <textarea id="create-input-cues-en" rows="2" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-amber-500 font-serif italic leading-relaxed" placeholder="Optional English instructions..."></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-rose-700 mb-1">注意事項與禁忌</label>
+          <input type="text" id="create-input-precautions" placeholder="例: 膝蓋關節急性疼痛者請在膝下墊毯或減小幅度。" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+        </div>
+      </div>
+
+      <div class="p-3 bg-stone-50 border-t border-stone-200 flex items-center justify-end gap-2">
+        <button id="create-modal-cancel" class="px-3 py-1.5 text-stone-500 hover:text-stone-800 text-xs font-medium">取消</button>
+        <button id="create-modal-save" class="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-medium shadow-sm transition">確認新增至動作庫</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 序列動作卡片自訂編輯 Modal -->
+  <div id="pose-edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
+        <div class="flex items-center gap-2">
+          <i class="ph-fill ph-pencil-simple text-amber-700 text-lg"></i>
+          <h3 class="font-bold text-sm text-stone-800">編輯當前動作內容</h3>
+        </div>
+        <button id="edit-modal-close" class="p-1.5 text-stone-400 hover:text-stone-700 rounded-full">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-3.5 custom-scroll text-xs">
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">中文名稱</label>
+            <input type="text" id="edit-input-zh" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">英文名稱</label>
+            <input type="text" id="edit-input-en" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">停留秒數 (秒)</label>
+            <input type="number" id="edit-input-duration" min="5" max="900" step="5" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 font-semibold text-amber-800">
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-600 mb-1">側別設定</label>
+            <select id="edit-input-side" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-amber-500">
+              <option value="both">雙側對稱 (Both)</option>
+              <option value="left">左側 (Left Side)</option>
+              <option value="right">右側 (Right Side)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">中文引導口令</label>
+          <textarea id="edit-input-cues-zh" rows="3" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-amber-500 leading-relaxed"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">英文引導口令 (English Cues)</label>
+          <textarea id="edit-input-cues-en" rows="3" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs focus:ring-1 focus:ring-amber-500 font-serif italic leading-relaxed"></textarea>
+        </div>
+      </div>
+
+      <div class="p-3 bg-stone-50 border-t border-stone-200 flex items-center justify-end gap-2">
+        <button id="edit-modal-cancel" class="px-3 py-1.5 text-stone-500 hover:text-stone-800 text-xs font-medium">取消</button>
+        <button id="edit-modal-save" class="px-4 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-medium shadow-sm transition">儲存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全螢幕播放器 (Player) -->
   <div id="flow-player-modal" class="fixed inset-0 bg-stone-950 z-50 hidden flex flex-col text-white">
     <div class="px-4 py-3 flex items-center justify-between border-b border-stone-800 shrink-0">
       <div>
@@ -188,7 +353,7 @@
       </div>
       <div class="flex items-center gap-2">
         <button id="player-sound-test" class="text-[11px] px-2.5 py-1 bg-stone-800 text-stone-300 rounded-lg flex items-center gap-1">
-          <i class="ph ph-bell"></i> 頌缽 (Bowl)
+          <i class="ph ph-bell"></i> 頌缽
         </button>
         <button id="player-close-btn" class="p-1.5 text-stone-400 hover:text-white rounded-full">
           <i class="ph ph-x text-xl"></i>
@@ -197,11 +362,11 @@
     </div>
 
     <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
-      <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-base tracking-wider mb-0.5">Sanskrit</span>
-      <h2 id="player-pose-title-zh" class="text-3xl font-extrabold text-white mb-0.5 tracking-tight">體位中文名</h2>
-      <p id="player-pose-title-en" class="text-amber-200/90 text-sm font-medium mb-3">English Pose Name • Side</p>
+      <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-sm tracking-wider mb-0.5"></span>
+      <h2 id="player-pose-title-zh" class="text-3xl font-extrabold text-white tracking-tight">體位中文名</h2>
+      <p id="player-pose-title-en" class="text-stone-400 text-xs font-medium mt-0.5 mb-2">Pose English Name</p>
 
-      <div class="relative w-44 h-44 flex items-center justify-center my-3">
+      <div class="relative w-44 h-44 flex items-center justify-center my-2">
         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
           <circle cx="50" cy="50" r="44" stroke="#292524" stroke-width="6" fill="transparent" />
           <circle id="player-progress-circle" cx="50" cy="50" r="44" stroke="#D97706" stroke-width="6" fill="transparent" stroke-dasharray="276.46" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-300" />
@@ -212,13 +377,13 @@
         </div>
       </div>
 
-      <div class="bg-stone-900/95 border border-stone-800 rounded-xl p-3.5 mt-2 w-full text-xs leading-relaxed min-h-[85px] flex flex-col justify-center space-y-1.5 text-left">
-        <p id="player-cues-zh" class="text-stone-200 font-normal"><strong class="text-amber-400 mr-1">【中】</strong>中文引導口令載入中...</p>
-        <p id="player-cues-en" class="text-stone-400 font-serif italic text-[11px] border-t border-stone-800/80 pt-1"><strong class="text-amber-500 mr-1 not-italic font-sans">【EN】</strong>English cue text...</p>
+      <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-3.5 mt-2 w-full text-xs leading-relaxed min-h-[85px] flex flex-col justify-center space-y-1.5 text-left shadow-inner">
+        <p id="player-cues-zh" class="text-stone-200 font-normal leading-relaxed"></p>
+        <p id="player-cues-en" class="text-stone-400 font-serif italic text-[11px] border-t border-stone-800 pt-1 leading-relaxed"></p>
       </div>
 
       <div class="mt-2.5 flex items-center gap-1.5 text-[11px] text-stone-500">
-        <span>下個動作 (Next):</span>
+        <span>下個動作:</span>
         <strong id="player-next-pose-name" class="text-stone-300">...</strong>
       </div>
     </div>
@@ -236,9 +401,8 @@
     </div>
   </div>
 
-  <!-- 加入版本號 ?v=2.0，強制瀏覽器讀取最新無錯誤的 JS 檔案 -->
-  <script src="data/asanas.js?v=2.0"></script>
-  <script src="data/presets.js?v=2.0"></script>
-  <script src="js/app.js?v=2.0"></script>
+  <script src="data/asanas.js?v=4.0"></script>
+  <script src="data/presets.js?v=4.0"></script>
+  <script src="js/app.js?v=4.0"></script>
 </body>
 </html>

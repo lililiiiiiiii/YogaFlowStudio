@@ -1,15 +1,18 @@
 /**
- * Yoga Flow Studio - 核心邏輯 (加入健全防呆與安全切換機制)
+ * Yoga Flow Studio - 核心邏輯 (支援自訂動作卡片新增與儲存)
  */
 
 const AppState = {
   activeTab: 'sequence',
-  activeFilterType: 'all',
+  activeFilterType: 'all', // 'all' | 'yang' | 'yin' | 'custom'
   activeSearchKeyword: '',
   currentSequence: [],
   customSequences: {},
-  currentSequenceTitle: '自訂練習課表 (Custom Flow)',
+  customPoses: [], // 使用者自訂動作卡片庫
+  currentSequenceTitle: '自訂練習課表',
   
+  editingItemUniqueId: null,
+
   player: {
     isOpen: false,
     index: 0,
@@ -43,11 +46,11 @@ function playTibetanBowlSound() {
       osc.stop(now + 3.3);
     });
   } catch (e) {
-    console.warn("AudioContext init error:", e);
+    console.warn("Audio error:", e);
   }
 }
 
-// 梵文語音音素修復
+// 梵文音素平滑化
 function getPhoneticSanskrit(text) {
   if (!text) return '';
   return text
@@ -67,7 +70,7 @@ function getPhoneticSanskrit(text) {
     .trim();
 }
 
-// 帶超時保護的語音播放
+// 帶超時保護的非阻塞語音
 function speakAsync(text, lang = 'zh', timeoutMs = 6000) {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window) || !text) {
@@ -120,7 +123,7 @@ function speakAsync(text, lang = 'zh', timeoutMs = 6000) {
   });
 }
 
-// 播放體位語音流程
+// 體位語音流程
 async function triggerPoseSpeech(item) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
@@ -141,15 +144,15 @@ async function triggerPoseSpeech(item) {
 
   if (langChoice === 'en') {
     const enText = item.cuesEn || item.cues;
-    await speakAsync(`${item.en}${sideEn}. ${enText}`, 'en', 7000);
+    await speakAsync(`${item.en || item.zh}${sideEn}. ${enText}`, 'en', 7000);
   } else if (langChoice === 'dual') {
-    await speakAsync(`${item.zh}${sideZh}。${item.en}。${item.cues}`, 'zh', 8000);
+    await speakAsync(`${item.zh}${sideZh}。${item.en || ''}。${item.cues}`, 'zh', 8000);
   } else {
     await speakAsync(`${item.zh}${sideZh}。${item.cues}`, 'zh', 7000);
   }
 }
 
-// 分頁切換 (安全容錯版本)
+// 分頁切換
 function switchTab(targetTab) {
   AppState.activeTab = targetTab;
   const libView = document.getElementById('view-library');
@@ -170,16 +173,28 @@ function switchTab(targetTab) {
   }
 }
 
+// 取得全部體位（官方 142 + 使用者自訂）
+function getAllPoses() {
+  const official = window.YOGA_ASANAS || [];
+  return [...AppState.customPoses, ...official];
+}
+
 // 渲染動作庫列表
 function renderPoseGrid() {
   const container = document.getElementById('pose-grid');
   if (!container) return;
 
-  const asanasList = window.YOGA_ASANAS || [];
+  const allPoses = getAllPoses();
   container.innerHTML = '';
 
-  const filtered = asanasList.filter(p => {
-    const matchType = (AppState.activeFilterType === 'all') || (p.type === AppState.activeFilterType);
+  const filtered = allPoses.filter(p => {
+    let matchType = true;
+    if (AppState.activeFilterType === 'custom') {
+      matchType = !!p.isCustom;
+    } else if (AppState.activeFilterType !== 'all') {
+      matchType = (p.type === AppState.activeFilterType);
+    }
+
     const search = AppState.activeSearchKeyword.toLowerCase().trim();
     const matchSearch = !search ||
       (p.zh && p.zh.toLowerCase().includes(search)) ||
@@ -192,7 +207,7 @@ function renderPoseGrid() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div class="col-span-full py-16 text-center text-xs text-stone-400">查無相符體位 (No Poses Found)</div>';
+    container.innerHTML = '<div class="col-span-full py-16 text-center text-xs text-stone-400">查無相符體位</div>';
     return;
   }
 
@@ -200,30 +215,35 @@ function renderPoseGrid() {
     const card = document.createElement('div');
     card.className = 'p-3 bg-white border border-stone-200/90 rounded-2xl flex items-center justify-between gap-3 shadow-sm hover:border-amber-600/50 transition';
 
+    const isCustom = !!p.isCustom;
     const isYin = p.type === 'yin';
-    const tagBg = isYin ? 'bg-teal-50 text-teal-800 border-teal-200/60' : 'bg-amber-50 text-amber-800 border-amber-200/60';
-    const typeLabel = isYin ? 'Yin 陰' : 'Yang 陽';
+    let tagBg = isYin ? 'bg-teal-50 text-teal-800 border-teal-200/60' : 'bg-amber-50 text-amber-800 border-amber-200/60';
+    if (isCustom) tagBg = 'bg-rose-50 text-rose-800 border-rose-200/60';
+
+    let prefix = isYin ? 'YIN' : 'PPB';
+    if (isCustom) prefix = '自訂';
 
     card.innerHTML = `
       <div class="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer btn-open-detail">
         <div class="w-10 h-10 rounded-xl flex flex-col items-center justify-center font-bold text-[10px] shrink-0 border ${tagBg}">
-          <span>${isYin ? 'YIN' : 'PPB'}</span>
+          <span>${prefix}</span>
           <span class="text-[9px] font-mono">${String(p.id % 100).padStart(2, '0')}</span>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5 mb-0.5">
-            <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${tagBg}">${typeLabel}</span>
-            ${p.chakras ? `<span class="text-[9px] text-stone-400 truncate max-w-[120px]">${p.chakras}</span>` : ''}
+            <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${tagBg}">
+              ${isCustom ? '自訂體位' : (isYin ? '陰瑜珈' : '陽流動')}
+            </span>
+            ${p.chakras ? `<span class="text-[9px] text-stone-400 truncate max-w-[110px]">${p.chakras}</span>` : ''}
           </div>
-          <h4 class="font-bold text-xs text-stone-800 truncate">
-            ${p.zh} <span class="text-stone-500 font-medium font-sans">/ ${p.en}</span>
-          </h4>
+          <h4 class="font-bold text-sm text-stone-800 truncate">${p.zh}</h4>
+          <p class="text-[11px] text-stone-500 font-medium truncate">${p.en || ''}</p>
           <p class="text-[9px] text-amber-800/80 italic font-serif truncate mt-0.5">${p.sanskrit || ''}</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <button class="btn-open-detail p-2 text-stone-400 hover:text-stone-700 bg-stone-50 rounded-xl" title="Detail">
+        <button class="btn-open-detail p-2 text-stone-400 hover:text-stone-700 bg-stone-50 rounded-xl" title="詳情">
           <i class="ph ph-info text-base"></i>
         </button>
         <button class="btn-add-pose px-3 py-2 bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1 shadow-sm active:scale-95">
@@ -243,10 +263,10 @@ function renderPoseGrid() {
   });
 }
 
-// 加入體位到當前序列
+// 加入體位至序列
 function addPoseToCurrentSequence(poseId, side = 'both', duration = null) {
-  const asanasList = window.YOGA_ASANAS || [];
-  const p = asanasList.find(x => x.id === poseId);
+  const allPoses = getAllPoses();
+  const p = allPoses.find(x => x.id === poseId);
   if (!p) return;
 
   AppState.currentSequence.push({
@@ -254,7 +274,7 @@ function addPoseToCurrentSequence(poseId, side = 'both', duration = null) {
     poseId: p.id,
     type: p.type || 'yang',
     zh: p.zh,
-    en: p.en,
+    en: p.en || '',
     sanskrit: p.sanskrit || '',
     cues: p.cues,
     cuesEn: p.cuesEn || p.cues,
@@ -266,7 +286,7 @@ function addPoseToCurrentSequence(poseId, side = 'both', duration = null) {
   renderSequenceList();
 }
 
-// 渲染序列清單
+// 渲染序列列表
 function renderSequenceList() {
   const container = document.getElementById('sequence-container');
   const emptyState = document.getElementById('sequence-empty-state');
@@ -285,69 +305,70 @@ function renderSequenceList() {
 
   AppState.currentSequence.forEach((item, index) => {
     const card = document.createElement('div');
-    card.className = 'bg-white p-3 rounded-2xl border border-stone-200/90 shadow-sm space-y-2';
+    card.className = 'bg-white p-3 rounded-2xl border border-stone-200/90 shadow-sm space-y-2.5';
 
     const isYin = item.type === 'yin';
     const tagBg = isYin ? 'bg-teal-50 text-teal-800' : 'bg-amber-50 text-amber-800';
 
     card.innerHTML = `
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2.5 min-w-0">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
           <span class="w-5 h-5 rounded-md bg-stone-100 flex items-center justify-center font-bold text-[10px] text-stone-600 shrink-0">
             ${index + 1}
           </span>
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <div class="flex items-center gap-1.5">
-              <span class="text-[9px] px-1 rounded font-semibold ${tagBg}">${isYin ? 'Yin' : 'Yang'}</span>
-              <h4 class="font-bold text-xs text-stone-800 truncate">${item.zh} <span class="font-normal text-stone-500">/ ${item.en}</span></h4>
+              <span class="text-[9px] px-1 rounded font-semibold ${tagBg}">${isYin ? '陰' : '陽'}</span>
+              <h4 class="font-bold text-xs text-stone-800 truncate">${item.zh}</h4>
             </div>
-            <p class="text-[10px] text-amber-800/80 italic font-serif truncate">${item.sanskrit}</p>
+            <p class="text-[10px] text-stone-400 truncate">${item.en} • <span class="italic font-serif">${item.sanskrit}</span></p>
           </div>
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
-          <div class="flex items-center bg-stone-50 border border-stone-200 rounded-lg px-1.5 py-0.5">
-            <input type="number" min="5" max="900" step="10" class="duration-input w-12 text-center text-xs font-semibold bg-transparent text-stone-700" value="${item.duration}">
-            <span class="text-[10px] text-stone-400">s (秒)</span>
+          <div class="flex items-center bg-stone-50 border border-stone-200 rounded-lg px-2 py-0.5 text-xs">
+            <strong class="text-amber-800 font-semibold">${item.duration}</strong>
+            <span class="text-[10px] text-stone-400 ml-0.5">秒</span>
           </div>
-          <button class="btn-delete p-1.5 text-stone-400 hover:text-rose-600 rounded-lg" title="Delete">
+          <button class="btn-edit p-1.5 text-stone-500 hover:text-amber-700 hover:bg-stone-50 rounded-lg transition" title="編輯卡片內容">
+            <i class="ph ph-pencil-simple text-base"></i>
+          </button>
+          <button class="btn-delete p-1.5 text-stone-400 hover:text-rose-600 rounded-lg transition" title="刪除">
             <i class="ph ph-trash text-base"></i>
           </button>
         </div>
       </div>
 
       <div class="flex items-center justify-between pt-1 border-t border-stone-100 text-xs">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 text-stone-500">
+          <span class="text-[10px] text-stone-400">側別:</span>
           ${item.hasSideOption ? `
-            <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5">
-              <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側 (Both)</option>
+            <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5 focus:ring-0">
+              <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側對稱</option>
               <option value="left" ${item.selectedSide === 'left' ? 'selected' : ''}>左側 (Left)</option>
               <option value="right" ${item.selectedSide === 'right' ? 'selected' : ''}>右側 (Right)</option>
             </select>
-          ` : '<span class="text-[10px] text-stone-400">對稱體位 (Both Sides)</span>'}
+          ` : '<span class="text-[10px] text-stone-500 font-medium">雙側對稱</span>'}
         </div>
 
         <div class="flex items-center gap-2 text-stone-400">
-          <button class="btn-move-up p-1 hover:text-stone-700 ${index === 0 ? 'opacity-25 pointer-events-none' : ''}" title="Move Up">
+          <button class="btn-move-up p-1 hover:text-stone-700 ${index === 0 ? 'opacity-25 pointer-events-none' : ''}" title="上移">
             <i class="ph ph-arrow-up text-sm"></i>
           </button>
-          <button class="btn-move-down p-1 hover:text-stone-700 ${index === AppState.currentSequence.length - 1 ? 'opacity-25 pointer-events-none' : ''}" title="Move Down">
+          <button class="btn-move-down p-1 hover:text-stone-700 ${index === AppState.currentSequence.length - 1 ? 'opacity-25 pointer-events-none' : ''}" title="下移">
             <i class="ph ph-arrow-down text-sm"></i>
           </button>
-          <button class="btn-dup p-1 hover:text-amber-700" title="Duplicate & Switch Side">
+          <button class="btn-dup p-1 hover:text-amber-700" title="複製換側">
             <i class="ph ph-copy text-sm"></i>
           </button>
         </div>
       </div>
     `;
 
+    card.querySelector('.btn-edit')?.addEventListener('click', () => openEditPoseModal(item.uniqueId));
     if (item.hasSideOption) {
       card.querySelector('.side-selector')?.addEventListener('change', (e) => { item.selectedSide = e.target.value; });
     }
-    card.querySelector('.duration-input')?.addEventListener('change', (e) => {
-      item.duration = parseInt(e.target.value) || 30;
-      updateSequenceStats();
-    });
     card.querySelector('.btn-delete')?.addEventListener('click', () => {
       AppState.currentSequence.splice(index, 1);
       renderSequenceList();
@@ -389,7 +410,7 @@ function updateSequenceStats() {
   const badgeEl = document.getElementById('tab-badge');
 
   const count = AppState.currentSequence.length;
-  if (countEl) countEl.innerText = `${count} Poses (體位)`;
+  if (countEl) countEl.innerText = `${count} 體位`;
   if (badgeEl) {
     badgeEl.innerText = count;
     if (count > 0) badgeEl.classList.remove('hidden');
@@ -399,12 +420,108 @@ function updateSequenceStats() {
   const totalSec = AppState.currentSequence.reduce((acc, cur) => acc + (parseInt(cur.duration) || 0), 0);
   const min = Math.floor(totalSec / 60);
   const sec = totalSec % 60;
-  if (timeEl) timeEl.innerText = `${min}m ${sec}s (${min}分${sec}秒)`;
+  if (timeEl) timeEl.innerText = `${min} 分 ${sec} 秒`;
+}
+
+// 【自訂動作新增功能】
+function openCreatePoseModal() {
+  document.getElementById('create-input-zh').value = '';
+  document.getElementById('create-input-en').value = '';
+  document.getElementById('create-input-sanskrit').value = '';
+  document.getElementById('create-input-duration').value = '60';
+  document.getElementById('create-input-benefits').value = '';
+  document.getElementById('create-input-cues-zh').value = '';
+  document.getElementById('create-input-cues-en').value = '';
+  document.getElementById('create-input-precautions').value = '';
+
+  document.getElementById('pose-create-modal')?.classList.remove('hidden');
+}
+
+function closeCreatePoseModal() {
+  document.getElementById('pose-create-modal')?.classList.add('hidden');
+}
+
+function saveNewCustomPose() {
+  const zh = document.getElementById('create-input-zh')?.value.trim();
+  const cuesZh = document.getElementById('create-input-cues-zh')?.value.trim();
+
+  if (!zh) {
+    alert("請至少輸入中文名稱！");
+    return;
+  }
+  if (!cuesZh) {
+    alert("請至少輸入中文引導口令！");
+    return;
+  }
+
+  const newPose = {
+    id: 500 + AppState.customPoses.length + 1,
+    code: `CUS-${String(AppState.customPoses.length + 1).padStart(2, '0')}`,
+    isCustom: true,
+    type: document.getElementById('create-input-type')?.value || 'yang',
+    category: document.getElementById('create-input-category')?.value || 'warmup',
+    zh: zh,
+    en: document.getElementById('create-input-en')?.value.trim() || zh,
+    sanskrit: document.getElementById('create-input-sanskrit')?.value.trim() || '',
+    duration: parseInt(document.getElementById('create-input-duration')?.value) || 60,
+    sideMode: document.getElementById('create-input-side')?.value === 'dual' ? 'dual' : null,
+    benefits: document.getElementById('create-input-benefits')?.value.trim() || '自訂體位效益',
+    cues: cuesZh,
+    cuesEn: document.getElementById('create-input-cues-en')?.value.trim() || cuesZh,
+    details: '自訂動作，專注呼吸與自我感知。',
+    precautions: document.getElementById('create-input-precautions')?.value.trim() || '注意身體極限，請隨時安全退出。'
+  };
+
+  AppState.customPoses.unshift(newPose);
+  localStorage.setItem('yoga_flow_custom_poses', JSON.stringify(AppState.customPoses));
+
+  closeCreatePoseModal();
+  renderPoseGrid();
+  showToast(`已成功新增自訂動作「${zh}」！`);
+}
+
+// 序列中單一卡片內容編輯
+function openEditPoseModal(uniqueId) {
+  const item = AppState.currentSequence.find(x => x.uniqueId === uniqueId);
+  if (!item) return;
+
+  AppState.editingItemUniqueId = uniqueId;
+
+  document.getElementById('edit-input-zh').value = item.zh || '';
+  document.getElementById('edit-input-en').value = item.en || '';
+  document.getElementById('edit-input-duration').value = item.duration || 30;
+  document.getElementById('edit-input-side').value = item.selectedSide || 'both';
+  document.getElementById('edit-input-cues-zh').value = item.cues || '';
+  document.getElementById('edit-input-cues-en').value = item.cuesEn || '';
+
+  document.getElementById('pose-edit-modal')?.classList.remove('hidden');
+}
+
+function closeEditPoseModal() {
+  AppState.editingItemUniqueId = null;
+  document.getElementById('pose-edit-modal')?.classList.add('hidden');
+}
+
+function saveEditedPoseContent() {
+  if (!AppState.editingItemUniqueId) return;
+  const item = AppState.currentSequence.find(x => x.uniqueId === AppState.editingItemUniqueId);
+  if (!item) return;
+
+  item.zh = document.getElementById('edit-input-zh')?.value.trim() || item.zh;
+  item.en = document.getElementById('edit-input-en')?.value.trim() || item.en;
+  item.duration = parseInt(document.getElementById('edit-input-duration')?.value) || 30;
+  item.selectedSide = document.getElementById('edit-input-side')?.value || 'both';
+  item.cues = document.getElementById('edit-input-cues-zh')?.value.trim() || item.cues;
+  item.cuesEn = document.getElementById('edit-input-cues-en')?.value.trim() || item.cuesEn;
+
+  closeEditPoseModal();
+  renderSequenceList();
+  showToast("已成功更新動作卡片！");
 }
 
 // 新建空白序列
 function createNewBlankSequence() {
-  const name = prompt("請輸入新課表名稱 (Sequence Name)：", "自訂瑜珈課表 (Custom Flow)");
+  const name = prompt("請輸入新課表名稱：", "我的自訂瑜珈課表");
   if (name === null) return;
   AppState.currentSequenceTitle = name.trim() || "未命名課表";
   const titleInput = document.getElementById('sequence-title-input');
@@ -421,13 +538,13 @@ function createNewBlankSequence() {
 // 清空序列
 function clearCurrentSequence() {
   if (AppState.currentSequence.length === 0) {
-    showToast("目前序列是空的 (Already Empty)！");
+    showToast("目前序列是空的唷！");
     return;
   }
   if (confirm(`確定清空「${AppState.currentSequenceTitle}」的所有動作？`)) {
     AppState.currentSequence = [];
     renderSequenceList();
-    showToast("已清空序列 (Cleared)！");
+    showToast("已清空序列！");
   }
 }
 
@@ -449,13 +566,13 @@ function loadPresetSequence(presetId) {
   showToast(`已載入: ${found.name}`);
 }
 
-// 下拉選單分組渲染
+// 下拉選單渲染
 function refreshPresetDropdown() {
   const select = document.getElementById('preset-sequence-select');
   if (!select) return;
 
   const presetList = window.PRESET_SEQUENCES || [];
-  select.innerHTML = '<option value="">-- 載入官方課表 / 自訂庫 (Load Presets - 30 Flows) --</option>';
+  select.innerHTML = '<option value="">-- 載入官方推薦 / 自訂課表 (30 套) --</option>';
 
   const topicMap = {};
   presetList.forEach(ps => {
@@ -479,11 +596,11 @@ function refreshPresetDropdown() {
   const savedKeys = Object.keys(AppState.customSequences);
   if (savedKeys.length > 0) {
     const customGroup = document.createElement('optgroup');
-    customGroup.label = '── ⭐ 我的自訂課表 (My Custom Flows) ──';
+    customGroup.label = '── ⭐ 我的自訂課表 ──';
     savedKeys.forEach(k => {
       const opt = document.createElement('option');
       opt.value = 'custom_' + k;
-      opt.innerText = `⭐ ${k} (${AppState.customSequences[k].length} Poses)`;
+      opt.innerText = `⭐ ${k} (${AppState.customSequences[k].length} 體位)`;
       customGroup.appendChild(opt);
     });
     select.appendChild(customGroup);
@@ -496,7 +613,7 @@ function saveCurrentCustomSequence() {
     return;
   }
   const currentTitle = document.getElementById('sequence-title-input')?.value.trim() || AppState.currentSequenceTitle || '自訂課表';
-  const newTitle = prompt("請輸入此套課表名稱 (Sequence Name)：", currentTitle);
+  const newTitle = prompt("請輸入此套課表名稱：", currentTitle);
   if (!newTitle) return;
 
   AppState.customSequences[newTitle] = JSON.parse(JSON.stringify(AppState.currentSequence));
@@ -522,22 +639,25 @@ function loadCustomSequence(title) {
 // 動作詳情 Modal
 let activeModalPoseId = null;
 function openPoseModal(poseId) {
-  const asanasList = window.YOGA_ASANAS || [];
-  const p = asanasList.find(x => x.id === poseId);
+  const allPoses = getAllPoses();
+  const p = allPoses.find(x => x.id === poseId);
   if (!p) return;
   activeModalPoseId = p.id;
 
   const cardIdEl = document.getElementById('modal-card-id');
   if (cardIdEl) cardIdEl.innerText = `#${p.code || p.id}`;
   
-  const titleEl = document.getElementById('modal-title');
-  if (titleEl) titleEl.innerText = `${p.zh} • ${p.en}`;
+  const titleZhEl = document.getElementById('modal-title-zh');
+  if (titleZhEl) titleZhEl.innerText = p.zh;
+
+  const titleEnEl = document.getElementById('modal-title-en');
+  if (titleEnEl) titleEnEl.innerText = p.en || '';
   
   const sanskritEl = document.getElementById('modal-sanskrit-name');
   if (sanskritEl) sanskritEl.innerText = p.sanskrit || '';
   
   const benefitsEl = document.getElementById('modal-benefits');
-  if (benefitsEl) benefitsEl.innerText = p.benefits || (p.meridians ? `經絡 (Meridians)：${p.meridians}。脈輪 (Chakras)：${p.chakras}` : '活化身心能量，舒展全身筋膜。');
+  if (benefitsEl) benefitsEl.innerText = p.benefits || (p.meridians ? `經絡：${p.meridians}。脈輪：${p.chakras}` : '活化身心能量，舒展全身筋膜。');
   
   const cuesZhEl = document.getElementById('modal-cues-zh');
   if (cuesZhEl) cuesZhEl.innerText = p.cues;
@@ -597,7 +717,7 @@ function loadPlayerStep() {
   if (pState.index >= AppState.currentSequence.length) {
     playTibetanBowlSound();
     speakVoice("恭喜完成今日課表練習。Namaste。", "zh");
-    alert("🎉 練習結束！Namaste！(Practice Complete)");
+    alert("🎉 練習結束！Namaste！");
     closeFlowPlayer();
     return;
   }
@@ -610,7 +730,7 @@ function loadPlayerStep() {
   if (seqNameEl) seqNameEl.innerText = AppState.currentSequenceTitle;
 
   const poseIndexEl = document.getElementById('player-pose-index');
-  if (poseIndexEl) poseIndexEl.innerText = `體位 ${pState.index + 1} / ${AppState.currentSequence.length} (Pose)`;
+  if (poseIndexEl) poseIndexEl.innerText = `體位 ${pState.index + 1} / ${AppState.currentSequence.length}`;
 
   const sanskritTagEl = document.getElementById('player-sanskrit-tag');
   if (sanskritTagEl) sanskritTagEl.innerText = currentItem.sanskrit || '';
@@ -618,9 +738,9 @@ function loadPlayerStep() {
   const titleZhEl = document.getElementById('player-pose-title-zh');
   if (titleZhEl) titleZhEl.innerText = currentItem.zh;
 
-  let sideStr = "雙側 (Both Sides)";
-  if (currentItem.selectedSide === 'left') sideStr = "左側 (Left Side)";
-  if (currentItem.selectedSide === 'right') sideStr = "右側 (Right Side)";
+  let sideStr = "雙側對稱";
+  if (currentItem.selectedSide === 'left') sideStr = "左側 (Left)";
+  if (currentItem.selectedSide === 'right') sideStr = "右側 (Right)";
   
   const titleEnEl = document.getElementById('player-pose-title-en');
   if (titleEnEl) titleEnEl.innerText = `${currentItem.en} • ${sideStr}`;
@@ -680,23 +800,23 @@ function showToast(msg) {
   setTimeout(() => toast.classList.add('opacity-0'), 1800);
 }
 
-// 初始化生命週期
+// 頁面初始化
 window.addEventListener('DOMContentLoaded', () => {
+  // 讀取自訂課表與自訂動作
   try {
-    const raw = localStorage.getItem('yoga_flow_custom_db');
-    if (raw) AppState.customSequences = JSON.parse(raw);
+    const rawSeq = localStorage.getItem('yoga_flow_custom_db');
+    if (rawSeq) AppState.customSequences = JSON.parse(rawSeq);
+    const rawPoses = localStorage.getItem('yoga_flow_custom_poses');
+    if (rawPoses) AppState.customPoses = JSON.parse(rawPoses);
   } catch (e) {}
 
-  // 1. 初始化選單與動作庫
   refreshPresetDropdown();
   renderPoseGrid();
 
-  // 2. 預設載入開髖 Level 1
   if (window.PRESET_SEQUENCES && window.PRESET_SEQUENCES.length > 0) {
     loadPresetSequence('hips_l1');
   }
 
-  // 3. 課表下拉選單監聽
   document.getElementById('preset-sequence-select')?.addEventListener('change', (e) => {
     const val = e.target.value;
     if (!val) return;
@@ -704,13 +824,23 @@ window.addEventListener('DOMContentLoaded', () => {
     else if (val.startsWith('custom_')) loadCustomSequence(val.replace('custom_', ''));
   });
 
-  // 4. 頂部快捷按鈕
   document.getElementById('btn-quick-new')?.addEventListener('click', createNewBlankSequence);
   document.getElementById('btn-quick-clear')?.addEventListener('click', clearCurrentSequence);
   document.getElementById('btn-quick-save')?.addEventListener('click', saveCurrentCustomSequence);
   document.getElementById('btn-empty-goto-lib')?.addEventListener('click', () => switchTab('library'));
 
-  // 5. 陰陽過濾按鈕
+  // 【新增動作按鈕監聽】
+  document.getElementById('btn-create-pose')?.addEventListener('click', openCreatePoseModal);
+  document.getElementById('create-modal-close')?.addEventListener('click', closeCreatePoseModal);
+  document.getElementById('create-modal-cancel')?.addEventListener('click', closeCreatePoseModal);
+  document.getElementById('create-modal-save')?.addEventListener('click', saveNewCustomPose);
+
+  // 編輯動作卡片監聽
+  document.getElementById('edit-modal-close')?.addEventListener('click', closeEditPoseModal);
+  document.getElementById('edit-modal-cancel')?.addEventListener('click', closeEditPoseModal);
+  document.getElementById('edit-modal-save')?.addEventListener('click', saveEditedPoseContent);
+
+  // 篩選按鈕
   document.querySelectorAll('.type-filter-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('.type-filter-btn').forEach(b => {
@@ -722,29 +852,33 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 6. 搜尋框監聽
   document.getElementById('search-input')?.addEventListener('input', (e) => {
     AppState.activeSearchKeyword = e.target.value;
     renderPoseGrid();
   });
 
-  // 7. 底部 Tab 鍵 (強制保證點擊切換生效)
   const tabLib = document.getElementById('tab-library');
   const tabSeq = document.getElementById('tab-sequence');
   if (tabLib) tabLib.onclick = () => switchTab('library');
   if (tabSeq) tabSeq.onclick = () => switchTab('sequence');
 
-  // 8. 彈窗關閉與加入
   document.getElementById('modal-close-btn')?.addEventListener('click', closePoseModal);
   document.getElementById('modal-add-btn')?.addEventListener('click', () => {
     if (activeModalPoseId) {
       addPoseToCurrentSequence(activeModalPoseId);
       closePoseModal();
-      showToast("已加入課表 (Added)！");
+      showToast("已加入課表！");
     }
   });
 
-  // 9. 播放器控制鍵
+  document.getElementById('modal-voice-btn')?.addEventListener('click', () => {
+    if (activeModalPoseId) {
+      const allPoses = getAllPoses();
+      const p = allPoses.find(x => x.id === activeModalPoseId);
+      if (p) triggerPoseSpeech(p);
+    }
+  });
+
   document.getElementById('tab-play')?.addEventListener('click', startFlowPlayer);
   document.getElementById('player-close-btn')?.addEventListener('click', closeFlowPlayer);
   document.getElementById('player-sound-test')?.addEventListener('click', playTibetanBowlSound);
