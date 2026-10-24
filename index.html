@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>YogaFlow Studio - 專業瑜珈序列</title>
+  <title>Yoga Flow Studio - 專業瑜珈序列編排與教學播放器</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons -->
@@ -27,21 +27,21 @@
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-  <!-- 手機頂部導航列 -->
-  <header class="bg-white/95 backdrop-blur border-b border-stone-200 px-4 py-3 shrink-0 flex items-center justify-between z-20">
+  <!-- 頂部導航列 -->
+  <header class="bg-white/95 backdrop-blur border-b border-stone-200 px-4 py-2.5 shrink-0 flex items-center justify-between z-20">
     <div class="flex items-center gap-2">
       <div class="w-8 h-8 rounded-lg bg-amber-600/10 text-amber-800 flex items-center justify-center font-bold text-lg">
         <i class="ph-fill ph-flower-lotus"></i>
       </div>
       <div>
-        <h1 class="font-bold text-sm text-stone-800 leading-tight">YogaFlow Studio</h1>
+        <h1 class="font-bold text-sm text-stone-800 leading-tight">Yoga Flow Studio</h1>
         <p class="text-[10px] text-stone-500">82 Asanas 序列助手</p>
       </div>
     </div>
 
-    <!-- 頂部快速設定與工具 -->
+    <!-- 語音語言設定與更多選單 -->
     <div class="flex items-center gap-2">
-      <!-- 語音語言快捷選單 -->
+      <!-- 語音切換 -->
       <select id="voice-lang-select" class="text-[11px] bg-stone-100 border border-stone-200 text-stone-700 rounded-lg px-2 py-1 focus:ring-0">
         <option value="zh">中文</option>
         <option value="en">English</option>
@@ -54,17 +54,17 @@
         <span>梵文</span>
       </label>
 
-      <!-- 更多選單 (儲存 / 匯出) -->
+      <!-- 更多操作按鈕 -->
       <button id="btn-top-menu" class="p-1.5 text-stone-600 hover:text-stone-900 bg-stone-100 rounded-lg">
         <i class="ph ph-dots-three-vertical text-base"></i>
       </button>
     </div>
   </header>
 
-  <!-- 更多選項下拉彈出層 (Mobile Popover) -->
-  <div id="top-menu-dropdown" class="hidden absolute right-4 top-14 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-44 z-30 text-xs">
+  <!-- 頂部更多下拉選單 -->
+  <div id="top-menu-dropdown" class="hidden absolute right-4 top-13 bg-white rounded-xl shadow-xl border border-stone-200 py-1.5 w-44 z-30 text-xs">
     <button id="btn-save-seq" class="w-full text-left px-4 py-2 hover:bg-stone-50 text-stone-700 flex items-center gap-2">
-      <i class="ph ph-floppy-disk text-base text-amber-700"></i> 儲存自訂序列
+      <i class="ph ph-floppy-disk text-base text-amber-700"></i> 儲存自訂課表
     </button>
     <button id="btn-export-json" class="w-full text-left px-4 py-2 hover:bg-stone-50 text-stone-700 flex items-center gap-2">
       <i class="ph ph-export text-base text-stone-600"></i> 匯出 JSON 檔案
@@ -74,16 +74,16 @@
     </button>
   </div>
 
-  <!-- 主內容視圖容器 (透過下方 Tab 切換) -->
+  <!-- 主畫面：視圖切換區 -->
   <main class="flex-1 overflow-hidden relative">
 
     <!-- 視圖 1：動作庫 (Pose Library View) -->
-    <div id="view-library" class="w-full h-full flex flex-col bg-white">
+    <div id="view-library" class="hidden w-full h-full flex flex-col bg-white">
       <!-- 搜尋與分類滑動列 -->
       <div class="p-3 border-b border-stone-100 space-y-2 shrink-0 bg-stone-50/50">
         <div class="relative">
           <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-sm"></i>
-          <input type="text" id="search-input" placeholder="搜尋體位名稱、梵文、指令關鍵字..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
+          <input type="text" id="search-input" placeholder="搜尋體位名稱、梵文、口令..." class="w-full bg-white border border-stone-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-amber-500 transition">
         </div>
         
         <!-- 分類膠囊標籤列 (支援橫向滑動) -->
@@ -108,7 +108,7 @@
     </div>
 
     <!-- 視圖 2：序列編排 (Sequence View) -->
-    <div id="view-sequence" class="hidden w-full h-full flex flex-col bg-[#FAF8F5]">
+    <div id="view-sequence" class="w-full h-full flex flex-col bg-[#FAF8F5]">
       <!-- 課表標題與快速載入列 -->
       <div class="p-3 bg-white border-b border-stone-200 shrink-0 space-y-2">
         <div class="flex items-center justify-between gap-2">
@@ -117,9 +117,9 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- 預設課表下拉選單 -->
+          <!-- 課表下拉選單 -->
           <select id="preset-sequence-select" class="text-xs bg-stone-50 border border-stone-200 text-stone-700 rounded-lg px-2.5 py-1.5 flex-1 truncate">
-            <option value="">-- 載入官方預設課表 --</option>
+            <option value="">-- 載入官方預設 / 自訂課表 --</option>
           </select>
         </div>
 
@@ -143,15 +143,15 @@
     </div>
   </main>
 
-  <!-- 手機底部切換標籤列 (Bottom Tab Bar) -->
+  <!-- 底部導航列 (Bottom Tab Bar) -->
   <nav class="bg-white border-t border-stone-200 px-6 py-2 shrink-0 flex items-center justify-between z-30 shadow-lg">
-    <button id="tab-library" class="tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px]">
-      <i class="ph-fill ph-books text-xl"></i>
+    <button id="tab-library" class="tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]">
+      <i class="ph-bold ph-books text-xl"></i>
       <span>動作庫</span>
     </button>
 
-    <button id="tab-sequence" class="tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px] relative">
-      <i class="ph-bold ph-cards text-xl"></i>
+    <button id="tab-sequence" class="tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative">
+      <i class="ph-fill ph-cards text-xl"></i>
       <span>編排序列</span>
       <span id="tab-badge" class="hidden absolute -top-1 -right-2 w-4 h-4 rounded-full bg-amber-600 text-white text-[9px] flex items-center justify-center font-bold">0</span>
     </button>
@@ -162,7 +162,7 @@
     </button>
   </nav>
 
-  <!-- 動作詳情 Modal (手機優化大彈窗) -->
+  <!-- 動作詳情 Modal -->
   <div id="pose-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
     <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[88vh] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
       <div class="p-4 border-b border-stone-100 flex items-start justify-between bg-stone-50/70">
@@ -211,9 +211,8 @@
     </div>
   </div>
 
-  <!-- 全螢幕手機專用引導播放器 (Flow Player Modal) -->
+  <!-- 全螢幕手機專用引導播放器 -->
   <div id="flow-player-modal" class="fixed inset-0 bg-stone-950 z-50 hidden flex flex-col text-white">
-    <!-- 播放器頂部列 -->
     <div class="px-4 py-3 flex items-center justify-between border-b border-stone-800 shrink-0">
       <div>
         <h3 id="player-seq-name" class="font-bold text-xs text-stone-200 truncate max-w-[200px]">專注序列播放中</h3>
@@ -229,7 +228,7 @@
       </div>
     </div>
 
-    <!-- 播放器中央內容 (直向最適化) -->
+    <!-- 播放器中央內容 -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
       <span id="player-sanskrit-tag" class="text-amber-400 font-serif italic text-base tracking-wider mb-1">Marjaryasana Bitilasana</span>
       <h2 id="player-pose-title" class="text-3xl font-extrabold text-white mb-1 tracking-tight">貓牛式</h2>
@@ -272,632 +271,9 @@
     </div>
   </div>
 
-  <!-- 資料庫與業務邏輯 JS -->
-  <script>
-    /* 全 82 個體位資料庫 */
-    const YOGA_ASANAS = [
-      { id: 1, code: "PPB-01", category: "warmup", zh: "貓牛式", en: "Cat Cow", sanskrit: "Marjaryasana Bitilasana", dots: 1, isHeat: false, duration: 30, benefits: "伸展與強健呼吸肌群、活動脊椎骨骼關節、按摩腹部臟器、促進血液循環。", cues: "四足跪姿，手腕在肩膀正下方。吸氣腹部微沉，提胸望向上方成牛式；呼氣收緊肚臍圓背推地，視線看小腹成貓式。", details: "五指如抓沙般均勻壓實墊子以保護手腕，手肘內側微轉向前，全程配合呼吸深長流動5-8次。", precautions: "頸椎受傷者請保持頸部中立不刻意仰視；膝蓋慢性疼痛者可在膝下折疊毛毯墊厚。" },
-      { id: 2, code: "PPB-02", category: "warmup", zh: "坐姿繞肩", en: "Seated Shoulder Circles", sanskrit: "Skandha Chakra", dots: 1, isHeat: false, duration: 25, benefits: "緩解肩胛與斜方肌緊張、增進胸腔開合幅度、活化呼吸肌群。", cues: "坐姿端正，指尖輕觸雙肩。吸氣手肘於胸前併攏向上劃圓，呼氣打開肩胛向後向下沉降。", details: "向上劃時感受兩側肩胛骨分開，向下劃時夾緊肩胛骨，順逆時針各進行5次大圈。", precautions: "肩關節急性發炎或夾擊症狀者，縮小繞圈幅度。" },
-      { id: 3, code: "PPB-03", category: "warmup", zh: "坐姿側彎延展", en: "Seated Side Stretch", sanskrit: "Parsva Sukhasana", dots: 1, isHeat: false, duration: 30, benefits: "伸展側腰腹斜肌與肋間肌、擴展肺活量、增進脊椎側屈彈性。", cues: "坐姿吸氣將一側手臂貼近耳旁高舉延展，吐氣由腹部核心穩定帶動上半身側向傾斜伸展。", details: "雙側坐骨均勻扎根墊子不抬起，上方胸膛朝天花板翻轉展開，避免含胸聳肩。", precautions: "脊椎急性挫傷者勿過深側彎；頸部不適者視線自然平視前方。" },
-      { id: 4, code: "PPB-04", category: "warmup", zh: "坐姿溫和扭轉", en: "Seated Gentle Twist", sanskrit: "Parivrtta Sukhasana", dots: 1, isHeat: false, duration: 30, benefits: "順應腸胃蠕動方向刺激消化、鎮靜神經系統、改善久坐姿勢脊柱僵硬。", cues: "吸氣脊椎往頭頂延展拔高，呼氣核心發力由胸椎帶動軀幹向右扭轉；後手置於臀部後方支撐。", details: "遵循人體消化道走向，建議永遠由右側先開始扭轉；勿用手臂暴力借力拉扯脊椎。", precautions: "懷孕期間避免深層閉合式扭轉；腰椎間盤突出者保持微幅軸向旋轉即可。" },
-      { id: 5, code: "PPB-05", category: "warmup", zh: "手腕暖身", en: "Wrist Warm Up", sanskrit: "Manibandha Naman", dots: 1, isHeat: false, duration: 20, benefits: "潤滑腕關節、增進伸腕肌腱韌帶韌性、為手臂支撐體位打下基石。", cues: "端坐，手臂向兩側平舉並上舉過頭，同時配合手腕做大幅度內外向旋轉劃圈各5-8次。", details: "可搭配在四足跪姿下，將手指方向朝向膝蓋做輕微的前後重心位移，循序漸進伸展腕屈肌。", precautions: "手腕已有嚴重腱鞘炎或急性腕隧道壓迫時應避免體重垂直壓迫。" },
-      { id: 6, code: "PPB-06", category: "seated", zh: "蝴蝶式 (束角式)", en: "Butterfly Pose", sanskrit: "Baddha Konasana", dots: 1, isHeat: false, duration: 40, benefits: "伸展大腿內收肌與鼠蹊部、刺激骨盆腔血液循環、安撫神經與舒緩疲勞。", cues: "屈膝腳掌互對併攏，腳跟收向骨盆。吸氣拉長背部挺胸，吐氣手肘向外開展，上半身持平脊椎前傾。", details: "可輕微擺動雙膝放鬆髖部肌緊張；若骨盆後傾下背拱起，可在臀部下方墊一塊瑜珈磚或厚毯。", precautions: "鼠蹊肌拉傷或膝蓋扭傷者，可在雙膝外側下方各墊一塊瑜珈磚做支撐。" },
-      { id: 7, code: "PPB-07", category: "warmup", zh: "開胸伸展", en: "Open Chest", sanskrit: "Anuvittasana Prep", dots: 1, isHeat: false, duration: 25, benefits: "矯正圓肩含胸駝背、刺激頸部甲狀腺機能、深層釋放胸大肌與胸廓肋間。", cues: "坐姿雙手置於臀後指尖朝外，雙肩後收下沉夾緊肩胛，吸氣時將胸骨朝天空昂揚擴展。", details: "感受胸口如被無形絲線牽引向上，保持頸椎順暢延展，勿過度折頸後仰。", precautions: "頸椎損傷者下巴微收緊靠鎖骨；肩關節劇痛者將手向外放寬。" },
-      { id: 8, code: "PPB-08", category: "warmup", zh: "頸部暖身", en: "Neck Warm Up", sanskrit: "Griva Sanchalana", dots: 1, isHeat: false, duration: 25, benefits: "舒緩手機低頭族頸椎壓力、改善頸側肌群彈性、促進頭部供血。", cues: "進行三個方向伸展：1.低頭收下巴與微仰；2.左右轉頭看肩後；3.側偏耳朵找同側肩膀。各5次。", details: "所有動作緩慢溫和，呼吸均勻，切勿用蠻力甩頭或做過度後仰壓迫頸椎小關節。", precautions: "頸椎骨刺、椎動脈供血不足或眩暈症者務必極慢並縮小幅度。" },
-      { id: 9, code: "PPB-09", category: "warmup", zh: "穿針式", en: "Thread the Needle", sanskrit: "Parsva Balasana", dots: 1, isHeat: false, duration: 35, sideMode: "dual", benefits: "釋放菱形肌與後背肩胛緊繃、活動胸椎旋轉角度、鎮定中樞神經系統。", cues: "由四足跪姿開始，吸氣左臂沖天開胸，呼氣將左手穿過身體下方右側貼地，左肩與側臉著地。", details: "保持骨盆水平對正不向側傾斜；右手上伸向前或反繞至背後大腿內側加深開肩。", precautions: "膝蓋或肩部急性挫傷者避免承受過大體重壓迫；孕婦適度墊磚不壓迫腹部。" },
-      { id: 10, code: "PPB-10", category: "warmup", zh: "核心腹肌啟動組", en: "Core Drills", sanskrit: "Navasana Drills", dots: 2, isHeat: true, duration: 40, benefits: "深層激活腹橫肌與腹斜肌、穩定腰椎骨盆核心、促進腸道消化機能。", cues: "仰臥下背緊壓墊子，進行仰臥抬腿、腳踏車式旋轉或骨盆微提。全程肚臍向脊椎方向收緊。", details: "若發現腹直肌中央隆起凸出，代表深層腹橫肌代償，應縮小腿部下落角度並微屈膝。", precautions: "孕期避免；急性下背腰痛或髂腰肌過度緊繃者改為屈膝輕度捲腹。" },
-      { id: 11, code: "PPB-11", category: "warmup", zh: "拜日式 A", en: "Sun Salutation A", sanskrit: "Surya Namaskar A", dots: 2, isHeat: true, duration: 60, benefits: "全身性筋膜溫熱活化、提升心肺循環、鍛鍊全身主要大肌群與骨盆靈活度。", cues: "山式吸氣延展山式→呼氣前彎→吸氣半前彎→呼氣棒式降至四柱→吸氣上犬/眼鏡蛇→呼氣下犬式(停5息)。", details: "一動一呼吸，以流動心肺喚醒體內之火；四柱支撐力不足時可先跪姿膝胸頦點地過渡。", precautions: "高血壓、心臟病或腕隧道綜合症需放慢節奏，或多在下犬/嬰兒式調整休息。" },
-      { id: 12, code: "PPB-12", category: "warmup", zh: "拜日式 B", en: "Sun Salutation B", sanskrit: "Surya Namaskar B", dots: 3, isHeat: true, duration: 90, benefits: "深度強健股四頭肌與臀肌、增進髂腰肌伸展、提升耐力與心肺代謝。", cues: "山式屈膝入幻椅式→前彎→半前彎→四柱→上犬→下犬→右腳邁步起入勇士一式→流動換左側。", details: "注意勇士一式後腳足跟扎地外展45度，骨盆雙側盡可能朝向正前方，核心收緊防塌腰。", precautions: "下肢膝蓋無力或髖關節緊繃時，可用高弓步 (Crescent Lunge) 替代勇士一式。" },
-      { id: 13, code: "PPB-13", category: "standing", zh: "山式", en: "Mountain Pose", sanskrit: "Tadasana", dots: 1, isHeat: false, duration: 20, benefits: "校準全身骨骼垂直力線、強化足弓與雙腿穩定性、沉靜專注大腦。", cues: "大腳趾併攏或雙腳與骨盆同寬。足底三點均勻踩實，大腿前側向上收提，尾骨下沉，雙肩向後沉降。", details: "頭頂百會穴如向上牽引，雙手於身體兩側微微外展展開胸腔，微收下顎保持脊柱挺拔中立。", precautions: "頭暈或血壓過低者可雙腳分開同寬站立。" },
-      { id: 14, code: "PPB-14", category: "standing", zh: "站姿前彎式", en: "Standing Forward Fold", sanskrit: "Uttanasana", dots: 1, isHeat: false, duration: 35, benefits: "深層伸展大腿後側膕繩肌與小腿、放鬆脊柱與後頸、安撫副交感神經降血壓。", cues: "由髖關節為折疊軸心向前向下傾倒，上半身自然垂墜，雙手觸地或互抱手肘成布娃娃狀。", details: "下背緊繃者務必微屈雙膝，重心前移至前腳掌三分之一處，感受坐骨向天空頂起延展。", precautions: "腰椎間盤突出或坐骨神經痛發作期請微屈膝；高血壓起身時務必慢速回正防眩暈。" },
-      { id: 15, code: "PPB-15", category: "standing", zh: "幻椅式", en: "Chair Pose", sanskrit: "Utkatasana", dots: 2, isHeat: true, duration: 30, benefits: "爆發強化股四頭肌、臀大肌與足踝穩定、提升背部伸肌耐力。", cues: "由山式吸氣手臂高舉過頭，呼氣屈髖屈膝如坐無形椅子；重心落於腳跟，肋骨微收防塌腰。", details: "雙膝不可超過腳尖過多並保持雙膝不內扣；若肩膀夾擠可將雙手於胸前合十。", precautions: "嚴重下背痛或退化性膝關節炎患者減少屈膝角度；心臟病患者雙手於胸前合十。" },
-      { id: 16, code: "PPB-16", category: "standing", zh: "旋轉幻椅式", en: "Twisted Chair Pose", sanskrit: "Parivrtta Utkatasana", dots: 2, isHeat: true, duration: 30, sideMode: "dual", benefits: "深層刺激腹部內臟與消化道、鍛鍊腹斜肌核心、強化大腿與臀部力量。", cues: "在幻椅式中雙手胸前合十，呼氣向右轉體，左手肘抵在右大腿外側，吸氣延展胸口，吐氣轉深。", details: "檢視雙膝保持平行對齊，勿讓左膝向前方凸出位移，確保扭轉力量來自胸椎而非骨盆偏斜。", precautions: "懷孕期間禁做；脊椎或肋骨傷後復健期微轉即可。" },
-      { id: 17, code: "PPB-17", category: "standing", zh: "新月高弓步式", en: "Crescent Lunge / High Lunge", sanskrit: "Ashta Chandrasana", dots: 2, isHeat: true, duration: 35, sideMode: "dual", benefits: "深層伸展後腿髂腰肌與髖屈肌、強化前腿臀腿穩定肌、挺拔胸腔肺部。", cues: "前腿屈膝90度膝蓋在腳踝正上方，後腳跟高高蹬起；雙臂高舉，尾骨微向下收，提胸擴展。", details: "後腿膝蓋微屈有助於穩定骨盆後傾中立，避免腰椎超伸；雙腳保持如兩條平行軌道之寬度。", precautions: "下背不適者微屈後膝；高血壓患者雙手放骨盆或胸前合十。" },
-      { id: 18, code: "PPB-18", category: "standing", zh: "三角式", en: "Triangle Pose", sanskrit: "Utthita Trikonasana", dots: 2, isHeat: false, duration: 35, sideMode: "dual", benefits: "開展側腰與骨盆、強化腿部膕繩肌與足踝、增進脊椎左右平衡對稱性。", cues: "雙腿分開約一大腿長，前腳朝前，後腳外展90度。吸氣雙臂平舉拉長軀幹，呼氣由前髖側折，下落手扶小腿或磚。", details: "想像後背緊貼一面牆，下方側腰同樣保持拉長延展不擠壓，上方手筆直指向天花板。", precautions: "頸部脆弱者視線朝下看腳趾；後腿膝蓋微屈防止膝超伸關節鎖死。" },
-      { id: 19, code: "PPB-19", category: "standing", zh: "勇士一式", en: "Warrior 1", sanskrit: "Virabhadrasana 1", dots: 2, isHeat: true, duration: 35, sideMode: "dual", benefits: "建構下肢根基穩定、開展胸背與後腿髂腰肌、提振自信與心靈意志。", cues: "前後步大跨步，前膝屈膝90度對齊腳踝，後腳跟貼地斜轉45度。雙髖水平朝前，手臂向上高舉掌心相對。", details: "若後髖無法順利轉正，可將雙腳左右間距拓寬，或後腳跟微離地轉為高弓步調整。", precautions: "高血壓與心血管疾病者手放髖部；膝關節側韌帶受損者務必轉移足部擺向。" },
-      { id: 20, code: "PPB-20", category: "standing", zh: "勇士二式", en: "Warrior 2", sanskrit: "Virabhadrasana 2", dots: 2, isHeat: true, duration: 40, sideMode: "dual", benefits: "深度強健大腿股四頭肌、開展鼠蹊大腿內側、鍛鍊上背與手臂耐力。", cues: "兩腳打開寬步，前腳朝前屈膝90度，後腳平行墊短邊。雙臂向前後水平延伸，視線看前手中指。", details: "前膝向外側微展對齊第二腳趾，避免內扣；後腳外側足弓切實扎地，骨盆正對長邊。", precautions: "頸椎疲累者頭部轉正視前方；膝關節磨損者縮小下蹲角度。" },
-      { id: 21, code: "PPB-21", category: "standing", zh: "反轉勇士二式", en: "Reverse Warrior 2", sanskrit: "Viparita Virabhadrasana", dots: 2, isHeat: false, duration: 30, sideMode: "dual", benefits: "大幅擴展前胸側肋間肌、深層放鬆橫膈膜、提振神經系統與活力。", cues: "由勇士二式保持下盤不動，吸氣前臂翻掌上舉向後延展，後手輕貼後腿或繞至背後。", details: "前腿始終維持下蹲90度不動，勿隨後仰起立；後手嚴禁直接按壓在後膝關節處。", precautions: "下背不適者勿過度後彎，僅專注側腰的向上延展感。" },
-      { id: 22, code: "PPB-22", category: "standing", zh: "雙角前彎式 (A-D)", en: "Wide-Legged Forward Bend", sanskrit: "Prasarita Padottanasana", dots: 2, isHeat: false, duration: 45, benefits: "深層伸展腿部後側肌群與內收肌群、平靜腦部血流、緩解久站緊繃。", cues: "雙腿寬分大步，雙腳微內八。雙手叉腰吸氣脊柱立直，呼氣由髖部折疊前彎，雙手落於肩下地面。", details: "可變化手背後互扣開肩 (C) 或抓大腳趾 (D)；重心前移至腳掌前緣，保持雙膝微彈性不鎖死。", precautions: "嚴重下背痛患者微屈膝，雙手置於瑜珈磚上保持背部平整即可。" },
-      { id: 23, code: "PPB-23", category: "standing", zh: "側角伸展式", en: "Extended Side Angle Pose", sanskrit: "Utthita Parsvakonasana", dots: 2, isHeat: true, duration: 35, sideMode: "dual", benefits: "強化下肢足踝與核心腹斜肌、伸展整個側身筋膜鏈、促進骨盆區域循環。", cues: "前膝屈90度，前前臂輕抵前大腿或手掌觸地於腳外側；上方手臂斜向過耳延伸，指尖至後腳跟成一直線。", details: "前大腿手肘勿將全部體重下壓癱軟；下方側腰主動收緊上提，胸膛朝天花板翻轉展開。", precautions: "肩部受損者上方手改放腰側；頸部痠痛者目光轉視地面。" },
-      { id: 24, code: "PPB-24", category: "standing", zh: "棒式膝觸鼻", en: "Plank Knee to Nose", sanskrit: "Phalakasana Knee to Nose", dots: 2, isHeat: true, duration: 25, sideMode: "dual", benefits: "劇烈強化深層下腹腹直肌、肩膀穩定度、鍛鍊抗伸展核心肌力。", cues: "由三腳犬吸氣抬腿，呼氣重心前移至高棒式，屈膝弓背將膝蓋緊緊貼近鼻尖或額頭，下巴微收。", details: "雙手掌骨全面推地創造肩胛骨隆起空間，保持骨盆水平不塌下，收緊骨盆底肌。", precautions: "手腕受傷、腕隧道症候群或胃食道逆流發作時避免進行。" },
-      { id: 25, code: "PPB-25", category: "standing", zh: "棒式膝觸肘 / 對側肘", en: "Plank Knee to Elbows", sanskrit: "Phalakasana Knee to Elbow", dots: 2, isHeat: true, duration: 25, sideMode: "dual", benefits: "強化腹內外斜肌、鍛鍊前鋸肌推力、提升高階手臂支撐前置肌力。", cues: "由下犬進單腿犬，呼氣前移棒式，單膝朝向同側或對側手肘上方輕觸並維持懸空1-3息。", details: "觸碰對側手肘時加深胸椎旋轉，保持支撐肩膀維持在手腕正上方不後退。", precautions: "腕關節或旋轉肌袖挫傷者避免衝擊式加壓。" },
-      { id: 26, code: "PPB-26", category: "standing", zh: "縛側角式", en: "Extended Side Angle Binds", sanskrit: "Baddha Utthita Parsvakonasana", dots: 3, isHeat: false, duration: 35, sideMode: "dual", benefits: "深層開展胸廓與雙肩旋轉肌、強化大腿肌耐力與核心骨盆扭轉穩定性。", cues: "在側角式中，下方手穿過前大腿內側繞至背後，上方手後背反折扣住手腕或手指；轉胸看天。", details: "若雙手無法觸及，可利用瑜珈繩輔助牽引，保持胸廓朝側邊開展，避免含胸趴地。", precautions: "肩部受損、腰椎受傷或孕婦嚴禁勉強閉鎖纏繞。" },
-      { id: 27, code: "PPB-27", category: "standing", zh: "狂喜式 (狂野式)", en: "Wild Thing", sanskrit: "Camatkarasana", dots: 3, isHeat: true, duration: 30, sideMode: "dual", benefits: "強烈開展心輪胸腔、增進單臂肩胛支撐穩定性、深度拉長全身前側筋膜。", cues: "由三腳犬屈膝開髖翻轉骨盆，懸空腳落於後方地面腳尖點地；推骨盆向上，上方手臂向後昂首延展。", details: "支撐手掌掌骨全面扎地推穩，啟動臀肌向天推高髖部，讓頸部自然順應脊椎弧度。", precautions: "手腕扭傷、肩袖肌腱發炎或嚴重腰椎滑脫者禁做此深度後彎。" },
-      { id: 28, code: "PPB-28", category: "standing", zh: "單腿下犬式 (三腳犬)", en: "3 Legged Dog", sanskrit: "Tri Pada Adho Mukha Svanasana", dots: 2, isHeat: false, duration: 30, sideMode: "dual", benefits: "拉長支撐腿膕繩肌、活化懸空腿臀肌與髖屈肌、鍛鍊上肢背部穩定推力。", cues: "由下犬式吸氣將單腿筆直向上向後延伸，雙手推力均勻，雙肩與骨盆盡可能保持水平向地。", details: "上方腳尖勾起或繃直皆可，保持核心收束；避免為了抬高腿而讓對側肩膀塌陷傾斜。", precautions: "腕關節脆弱者可用斜木磚緩解；晚期孕婦避免進行。" },
-      { id: 29, code: "PPB-29", category: "balance", zh: "舞者式", en: "Dancer Pose", sanskrit: "Natarajasana", dots: 3, isHeat: false, duration: 35, sideMode: "dual", benefits: "深度考驗單腿平衡、開展前胸與肩袖、伸展抬腿側股四頭肌與髂腰肌。", cues: "單腿站立，屈對側膝後收抓腳踝內側。吸氣前臂高舉前伸，呼氣腳背向後上方用力蹬開手掌帶起胸腔。", details: "由髖部向前微傾，但脊椎保持向上延展弧度；骨盆保持水平向正前，勿向側過度翻轉外開。", precautions: "下背椎間盤病變、腕隧道症狀或眩暈嚴重者慎做。" },
-      { id: 30, code: "PPB-30", category: "balance", zh: "樹式", en: "Tree Pose", sanskrit: "Vrksasana", dots: 1, isHeat: false, duration: 35, sideMode: "dual", benefits: "強化足踝與支撐腿肌群、增進骨盆外展靈活、訓練專注心神定錨力。", cues: "站姿重心移至左腿，右腳底貼在左腳踝、小腿或大腿內側 (避開膝關節)。雙手胸前合十，雙眼凝視前方一點。", details: "支撐腿大腿內側與腳底產生等長收縮互推力；尾骨微卷收緊臀肌，骨盆保持水平中立。", precautions: "高血壓患者雙手胸前合十即可，切勿高舉過頭。" },
-      { id: 31, code: "PPB-31", category: "balance", zh: "手抓大腳趾伸展式 (A/B)", en: "Extended Hand to Big Toe Pose", sanskrit: "Utthita Hasta Padangusthasana", dots: 3, isHeat: false, duration: 35, sideMode: "dual", benefits: "強烈拉長大腿後側膕繩肌、強化骨盆核心與支撐腿踝部穩定、開展髖部。", cues: "立姿屈膝提腿，食中指扣住大腳趾或抓腳踝。吸氣慢慢向前蹬直腿部 (A)，穩定後向側邊水平打開 (B)。", details: "若腿後側過緊導致含胸彎腰，可微屈抬起腿膝蓋或使用瑜珈織帶套住腳底前腳掌輔助。", precautions: "下背椎間盤損傷或腳踝習慣性扭傷者可背靠牆壁練習。" },
-      { id: 32, code: "PPB-32", category: "balance", zh: "勇士三式", en: "Warrior 3", sanskrit: "Virabhadrasana 3", dots: 3, isHeat: true, duration: 30, sideMode: "dual", benefits: "極致考驗臀大肌與大腿膕繩肌力量、強化後背多裂肌、提升專注平衡。", cues: "單腳站立，上半身與後腿同步向前向下傾斜直至與地面平行，身體呈 T 字形；手臂可前伸或置胸前。", details: "後腿腳趾勾起朝向地面確保骨盆兩側水平對正；支撐腿微屈膝以啟動股四頭肌保護膝關節。", precautions: "高血壓與心臟不適者手臂放髖部或胸前；嚴重腰痛者手扶瑜珈磚輔助。" },
-      { id: 33, code: "PPB-33", category: "balance", zh: "鷹式", en: "Eagle Pose", sanskrit: "Garudasana", dots: 2, isHeat: false, duration: 30, sideMode: "dual", benefits: "深度舒展後背肩胛背闊肌、活動髖膝關節關節囊、訓練小腦前庭平衡協調。", cues: "雙臂與雙腿交叉纏繞，右臂在左臂下纏繞合掌，右大腿纏繞在左大腿上方，屈膝半蹲，視線穿過手腕間。", details: "手肘微向上提並向前推開創造肩胛空間；若無法雙重纏繞腳踝，單腳腳趾輕點地保持平穩。", precautions: "膝關節急性扭傷或半月板受損者嚴禁扭絞膝蓋，僅做手臂纏繞即可。" },
-      { id: 34, code: "PPB-34", category: "backbend", zh: "眼鏡蛇式", en: "Cobra", sanskrit: "Bhujangasana", dots: 1, isHeat: false, duration: 25, benefits: "溫和強化脊柱伸肌、開展胸大肌、按摩腹部消化器官、改善下背輕度疼痛。", cues: "俯臥，手掌置於胸旁兩側，腳背壓地。吸氣收緊臀大肌與後背，由胸骨引領上半身向上微抬起。", details: "手肘微向內收靠緊身側肋骨，沉肩遠離雙耳；恥骨穩壓墊子，勿依賴雙臂死推擠壓腰椎。", precautions: "腕隧道症候群可做低位小眼鏡蛇或手浮空；孕婦及急性椎間盤突出禁做。" },
-      { id: 35, code: "PPB-35", category: "backbend", zh: "上犬式", en: "Upward Facing Dog", sanskrit: "Urdhva Mukha Svanasana", dots: 2, isHeat: false, duration: 25, benefits: "大幅開展胸廊肺部、強化手腕肩膀與手臂三頭肌、深層拉長大腿前側與腹壁。", cues: "雙手在肩膀正下方推地，腳背壓實。用力推地將整條大腿與膝蓋完全抬離地面，胸腔向上推展。", details: "手腕在肩膀正下方垂直於地面，雙肩向後旋轉沉降，後背肩胛骨收縮，頭部自然微仰。", precautions: "手腕疼痛或腰椎滑脫者以眼鏡蛇式替代；孕期中後期避免趴姿推起。" },
-      { id: 36, code: "PPB-36", category: "backbend", zh: "蝗蟲式", en: "Locust Pose", sanskrit: "Salabhasana", dots: 2, isHeat: false, duration: 30, benefits: "極致鍛鍊後背部肌肉鏈 (豎脊肌/臀肌/膕繩肌)、矯正圓肩駝背、提振陽氣。", cues: "俯臥腹部著地，雙臂置於體側掌心朝下。吸氣同時將胸膛、雙臂與伸直的雙腿抬離地面。", details: "骨盆前側肋骨下緣作為支點，大腿向內微夾緊，雙腳腳背向後延展，視線看前下方墊子以平順頸椎。", precautions: "孕婦避免；血壓過高或偏頭痛發作期避免長時間屏息停留。" },
-      { id: 37, code: "PPB-37", category: "backbend", zh: "弓式", en: "Bow Pose", sanskrit: "Dhanurasana", dots: 3, isHeat: false, duration: 30, benefits: "深層伸展人體前側全鏈條肌群、按摩腹部深層臟器、刺激消化與胸部呼吸活力。", cues: "俯臥屈雙膝，雙手向後抓腳踝。吸氣雙腳主動向後向上踢蹬，藉由拉力帶起胸腔與大腿離地成弓狀。", details: "保持雙膝寬度不超過骨盆寬；以小腹為支點隨呼吸輕微起伏，切勿聳肩擠壓頸部後側。", precautions: "嚴重下背痛、高血壓、偏頭痛或腹部近期手術者避免練習。" },
-      { id: 38, code: "PPB-38", category: "backbend", zh: "橋式", en: "Bridge Pose", sanskrit: "Setu Bandha Sarvangasana", dots: 1, isHeat: false, duration: 40, benefits: "啟動臀大肌與大腿後側、溫和擴展前胸、鎮靜腦部神經平衡血壓。", cues: "仰臥屈膝雙腳踩地同骨盆寬，腳跟靠近臀部。吸氣踩實足底提骨盆，雙手可在骨盆下方十指交扣壓地。", details: "膝蓋維持在腳踝正上方不向外垮塌；下巴微收保持喉嚨暢通，不左右晃動頭部。", precautions: "頸椎損傷者嚴禁過度壓迫；修復練習時可在薦椎下方橫放一塊瑜珈磚當作支撐橋式。" },
-      { id: 39, code: "PPB-39", category: "backbend", zh: "輪式 (上弓式)", en: "Upward Bow (Wheel) Pose", sanskrit: "Urdhva Dhanurasana", dots: 3, isHeat: true, duration: 30, benefits: "深層開展胸椎胸腔與肩胛、大幅強化手臂臀腿背部肌群、提振身心熱情活力。", cues: "仰臥手掌反扣耳旁指尖向肩。吸氣先由橋式頂高髖部，推地將頭頂置地，再呼氣雙手雙腿發力推直身軀懸空。", details: "胸口朝向手臂方向推展，大腿內夾保持平行不外八；緩慢下落時下巴收緊以保護頸椎後側。", precautions: "手腕隧道症候群、腕扭傷、高血壓或腰椎峽部裂患者嚴禁勉強嘗試。" },
-      { id: 40, code: "PPB-40", category: "backbend", zh: "駱駝式", en: "Camel Pose", sanskrit: "Ustrasana", dots: 2, isHeat: false, duration: 35, benefits: "深層開展胸廓與咽喉輪、伸展前側腹壁與大腿股四頭肌、改善圓肩駝背體態。", cues: "雙膝跪姿與骨盆同寬，雙手叉腰推骨盆向前。吸氣胸骨挺拔向上，呼氣雙肩向後旋，手掌依序輕觸雙腳腳跟。", details: "大腿與地面保持垂直90度，臀肌收緊向前推送以保護腰椎；頸部自然延展，若暈眩可收下巴看胸前。", precautions: "腰椎間盤突出或高血壓患者雙手叉後腰做輕度後展即可，切勿深抓腳跟。" },
-      { id: 41, code: "PPB-41", category: "backbend", zh: "魚式", en: "Fish Pose", sanskrit: "Matsyasana", dots: 2, isHeat: false, duration: 35, benefits: "大幅擴展胸肺容量、伸展頸前側與甲狀腺體、作為肩立式最佳的反向對位體位。", cues: "仰臥雙手墊在臀部下方掌心朝下。雙前臂與手肘用力壓地挺起胸膛，放鬆頸椎讓頭頂百會穴輕觸地面。", details: "重量90%承托在前臂與手肘上，頭頂僅10%輕觸墊子不承受下壓重力；雙腿併攏微繃腳背。", precautions: "頸椎急性扭傷或嚴重偏頭痛者禁止頭頂承重練習。" },
-      { id: 42, code: "PPB-42", category: "standing", zh: "金字塔式 (加強側伸展)", en: "Pyramid Pose", sanskrit: "Parsvottanasana", dots: 2, isHeat: false, duration: 35, sideMode: "dual", benefits: "深層伸展前腿膕繩肌與小腿、促進骨盆左右正位、平撫大腦思緒。", cues: "雙腿前後一米步幅，前腳朝前，後腳外展45度足跟踩實。雙手叉腰吸氣脊椎拔長，呼氣由前髖折疊前彎。", details: "前腳大腳趾球踩實，前側髖骨主動向後抽收保持骨盆端正水平；手下可墊瑜珈磚以維持背脊平整。", precautions: "大腿後側拉傷者前膝保持微屈；膝蓋超伸者切勿將關節完全鎖死。" },
-      { id: 43, code: "PPB-43", category: "standing", zh: "倒三角式 (破水平衡)", en: "Fallen Triangle", sanskrit: "Patita Tarasana", dots: 3, isHeat: true, duration: 30, sideMode: "dual", benefits: "強烈鍛鍊腹側核心與深層腹橫肌、開展大腿外側髂脛束 (ITB) 與胸廓、提升單臂支撐。", cues: "由三腳犬呼氣單膝找對側手肘，隨後將小腿向側邊筆直蹬出，外側腳掌著地；轉身向上展開另一手臂望天。", details: "下方支撐手臂推實墊子避免肩胛塌陷；收緊腹斜肌將骨盆用力向上頂高成一道美麗弧度。", precautions: "手腕挫傷、肩袖肌腱發炎或急性坐骨神經痛者暫緩練習。" },
-      { id: 44, code: "PPB-44", category: "inversion", zh: "肩立式", en: "Shoulder Stand", sanskrit: "Sarvangasana", dots: 3, isHeat: false, duration: 60, benefits: "活化全身淋巴與靜脈回流、調節甲狀腺內分泌代謝、沉澱平撫神經系統壓力。", cues: "仰臥屈膝啟動核心抬臀向上，雙手托住中背部，手肘內夾垂直壓地。慢慢將雙腿垂直向上延伸成一直線。", details: "頸椎下方必須保留約兩指空間懸空不貼死地面；目光嚴格固定看大腳趾，絕對禁止左右轉頭！", precautions: "頸椎病變、高血壓、眼壓過高、青光眼及生理期婦女改做雙腿靠牆式 (79)。" },
-      { id: 45, code: "PPB-45", category: "inversion", zh: "犁式", en: "Plow Pose", sanskrit: "Halasana", dots: 2, isHeat: false, duration: 40, benefits: "深層舒展全背豎脊肌與頸後筋膜、按摩腹部臟器改善便祕、安撫中樞神經有助深眠。", cues: "由肩立式緩慢呼氣將雙腿筆直落向頭部後方地面，腳尖點地；雙手可托腰或在背後十指交扣伸展。", details: "尾骨保持向上頂向天花板以減輕頸椎負擔；若腳尖無法觸地，可在後方放置瑜珈磚或椅子支撐腳尖。", precautions: "頸椎損傷、高血壓患者禁止練習；若感喉嚨受壓窒息感請即刻退出體位。" },
-      { id: 46, code: "PPB-46", category: "inversion", zh: "頭倒立式", en: "Headstand", sanskrit: "Sirsasana", dots: 3, isHeat: false, duration: 45, benefits: "「體位之王」，提升大腦供血專注力、建立強韌肩胛帶與深層核心、逆轉地心引力老化。", cues: "雙手十指互扣成杯狀靠頭後，前臂與手肘成穩定等邊三角形扎地。頭頂百會穴著地，收核心提臀緩慢離地直立。", details: "前臂與肩膀向下扎地推力承受80%以上體重，頸椎僅受輕微軸向力；雙腿併攏腳尖微繃向上延展。", precautions: "青光眼、心臟病、頸椎受損者禁做；初學者請在合格師資指引下靠牆練習並以嬰兒式收尾休息。" },
-      { id: 47, code: "PPB-47", category: "inversion", zh: "三腳頭倒立 / 小丑式", en: "The Clown / Tripod Headstand", sanskrit: "Sirsasana 2", dots: 3, isHeat: false, duration: 40, benefits: "鍛鍊手臂肱三頭肌與肩胛穩定性、建立手臂倒立本體感覺、深度強化下腹上提肌力。", cues: "雙手與頭頂百會穴在地面建立等邊三角形底座。雙手肘屈曲90度，雙膝緩慢輕放於兩側上臂三頭肌平台。", details: "手肘向內夾緊垂直於手腕上，勿向外擴散；若穩定性足夠，收縮腹核心慢慢將雙腿提拔至垂直。", precautions: "手腕關節疼痛、頸椎痛或高血壓患者請勿操作；下落時務必回到嬰兒式停留5息以上。" },
-      { id: 48, code: "PPB-48", category: "inversion", zh: "下犬式", en: "Downward Facing Dog", sanskrit: "Adho Mukha Svanasana", dots: 1, isHeat: false, duration: 45, benefits: "伸展整個後側鏈 (膕繩肌/小腿/阿基里斯腱)、拉長脊椎、作為流動與中和身心的母體位。", cues: "四足跪姿吸氣蹬腳提臀，坐骨頂向天花板，身體呈倒 V 字形。雙手十指均勻抓地，雙臂推直，放鬆後頸。", details: "手肘內側微向內轉，肩胛骨向兩側背部拓寬遠離耳朵；下背緊繃者可微屈膝抬腳跟以先維持脊柱筆直。", precautions: "腕隧道發炎或急性肩膀脫臼者減輕手掌推力；孕晚期避免長時間低頭倒置。" },
-      { id: 49, code: "PPB-49", category: "inversion", zh: "海豚式", en: "Dolphin Pose", sanskrit: "Ardha Pincha Mayurasana", dots: 2, isHeat: true, duration: 35, benefits: "建立前臂與肩膀支撐力量、開展腋下與上背、為前臂倒立奠定強健基礎。", cues: "由下犬式降下雙前臂貼地，前臂平行同肩寬。低頭放鬆後頸，雙腳向臉的方向碎步靠近，坐骨向上拔高。", details: "前臂與手肘持續主動推地，將肩膀推離耳朵，防止上身向前塌陷癱在肩關節上。", precautions: "肩袖急性發炎或青光眼患者改做下犬式或嬰兒式。" },
-      { id: 50, code: "PPB-50", category: "armbalance", zh: "反向桌式 / 反向棒式", en: "Upward Table / Upward Plank", sanskrit: "Purvottanasana", dots: 2, isHeat: false, duration: 30, benefits: "全面伸展肩膀前側胸大肌與二頭肌、強健臀大肌與大腿後側、作為前彎體位之理想反向動作。", cues: "坐姿雙手置於臀後約一掌遠，指尖朝前。吸氣踩實足底雙手推地，收緊臀肌將骨盆推高至與大腿軀幹平行。", details: "進階為雙腿伸直腳尖向地壓實成反向棒式；頸部若舒適可自然放鬆仰頭，頸椎不適者目光看肚臍。", precautions: "手腕挫傷、腕隧道痛或嚴重頸傷者避免深陷後仰。" },
-      { id: 51, code: "PPB-51", category: "armbalance", zh: "棒式 (平板式)", en: "Plank Pose", sanskrit: "Phalakasana", dots: 1, isHeat: true, duration: 35, benefits: "鍛鍊全身整合核心肌群、增強前鋸肌推力與肩帶穩定、建構手臂支撐地基。", cues: "雙手在肩膀正下方推地，雙腿向後蹬直與骨盆同寬。收縮腹肌與臀部，頭頂至腳後跟保持筆直成一塊木板。", details: "肩胛骨微向上隆起填平背部，不塌陷也不拱背；手肘微屈防止肘超伸鎖死。", precautions: "手腕劇痛者可採雙膝跪地減輕體重負擔，或改用前臂棒式支撐。" },
-      { id: 52, code: "PPB-52", category: "armbalance", zh: "四柱支撐式", en: "Chaturanga Dandasana", sanskrit: "Chaturanga Dandasana", dots: 3, isHeat: true, duration: 20, benefits: "爆發強化肱三頭肌與胸肌前側、鍛鍊深層骨盆核心抗塌陷耐力。", cues: "由高棒式吸氣身體重心前移，呼氣屈雙肘向後夾緊肋骨兩側緩慢下降，直至上手臂與地面平行90度。", details: "全身像鋼板般緊繃，肩頭嚴禁下墜低於手肘水平面以防肩袖拉傷；力量不足時請先以膝蓋著地退階。", precautions: "肩夾擊發炎、腕隧道患者嚴禁硬撐；孕期避免此深度腹直肌負荷體位。" },
-      { id: 53, code: "PPB-53", category: "armbalance", zh: "側棒式", en: "Side Plank", sanskrit: "Vasisthasana", dots: 2, isHeat: true, duration: 30, sideMode: "dual", benefits: "深層鍛鍊腹橫肌與側腰腹斜肌、增強單臂肩關節穩定力量、提升平衡抗旋能力。", cues: "由棒式將重心移至右側手掌與右腳外側緣，左臂朝天展開，軀幹與雙腿側向成一條斜直線。", details: "下方手腕微偏向前於肩膀前側以分散受力；下方髖部努力向天空收束頂高，雙腳可交疊或前後分開以利穩定。", precautions: "手腕或肩膀受傷者，可將下方膝蓋點地支撐練習。" },
-      { id: 54, code: "PPB-54", category: "armbalance", zh: "烏鴉式 / 鶴式", en: "Crow Pose / Crane Pose", sanskrit: "Bakasana / Kakasana", dots: 3, isHeat: true, duration: 25, benefits: "手臂平衡里程碑，強烈強化腕掌支撐力、上臂肌群、收腹下腹核心與神經協調。", cues: "深蹲雙手與肩同寬撐地，膝蓋緊扣於上手臂外側或貼近腋下。視線看前上方墊子，重心前移提腳掌離地懸空。", details: "十指微曲如鷹爪抓地以調校平衡；大腳趾在臀下互觸，核心如吸盤向上吸入，切勿低頭看腳掌以防前栽。", precautions: "手腕受傷、腕隧道痛或孕婦禁做；可在前方放置抱枕給予安全防護心理支持。" },
-      { id: 55, code: "PPB-55", category: "armbalance", zh: "八字扭轉式", en: "Eight-Angle Pose", sanskrit: "Astavakrasana", dots: 3, isHeat: true, duration: 25, sideMode: "dual", benefits: "高階手平體位，深層鍛鍊腹斜肌核心、大腿內收肌夾緊力與雙臂推撐耐力。", cues: "坐姿將一側大腿如背包背在同側上臂高處，雙腳腳踝交叉鎖緊。雙手撐地，收核心提臀離地並伸直雙腿向側撲出。", details: "手肘向後屈曲90度如四柱支撐平台，胸口向前挺拔延伸；雙腿內側必須死死夾緊大臂以維持平衡不瓦解。", precautions: "手腕、肩膀或膝關節急性受傷者請勿嘗試。" },
-      { id: 56, code: "PPB-56", category: "armbalance", zh: "螢火蟲式", en: "Firefly Pose", sanskrit: "Tittibhasana", dots: 4, isHeat: true, duration: 20, benefits: "極致開展腿部膕繩肌與鼠蹊、全面考驗手臂肱三頭肌與深層腹部吸提力量。", cues: "站姿前彎雙肩盡可能鑽入兩膝後方深處，手掌在腳後著地。臀部微降重心後移坐上大臂，提腳向兩側完全蹬直。", details: "大腿內收肌主動夾緊上手臂，視線看向前方地面，雙手持續推地抵抗地心引力。", precautions: "大腿後側拉傷、手腕骨裂或腰背急性傷痛者嚴禁嘗試。" },
-      { id: 57, code: "PPB-57", category: "armbalance", zh: "側烏鴉式", en: "Side Crow", sanskrit: "Parsva Bakasana", dots: 3, isHeat: true, duration: 25, sideMode: "dual", benefits: "鍛鍊胸椎極限旋轉核心力、手臂雙側非對稱平衡感知、雕塑側腰線條。", cues: "旋轉幻椅式下蹲至腳跟，雙手落地於右側墊外平行同肩寬。將右大腿外側抵在左手臂上，重心向斜前方前移起飛。", details: "初學者可將右髖骨同時輕靠在右肘上方建立雙支點；目光看前方墊面，保持胸廓展平不歪斜。", precautions: "腰椎間盤突出急性期、腕隧道炎或孕婦禁做。" },
-      { id: 58, code: "PPB-58", category: "balance", zh: "站姿 4 字形椅式", en: "Figure 4 Pose", sanskrit: "Eka Pada Utkatasana", dots: 2, isHeat: false, duration: 30, sideMode: "dual", benefits: "深層放鬆臀大肌與外側梨狀肌、增強支撐腿踝關節本體感覺、改善坐骨神經緊繃。", cues: "山式屈支撐腿膝蓋，將另一側腳踝橫跨於支撐腿大腿上方成4字形。雙手胸前合十，屈髖向後下蹲如坐椅。", details: "橫跨腳腳尖勾起以鎖定保護膝關節；胸膛保持挺拔向上，重心深坐至支撐腿腳後跟。", precautions: "膝關節嚴重磨損者微蹲即可，或改為仰臥4字形 (Reclining Pigeon)。" },
-      { id: 59, code: "PPB-59", category: "cooldown", zh: "嬰兒式", en: "Child's Pose", sanskrit: "Balasana", dots: 1, isHeat: false, duration: 60, benefits: "全身終極庇護體位，釋放腰椎下背與髖關節壓力、啟動副交感神經、調節呼吸節奏。", cues: "跪姿雙膝微開大腳趾互觸，臀部坐向腳後跟。上半身向前趴伏延伸，額頭輕貼墊子，雙臂前伸或置體側。", details: "若臀部坐不到腳跟，可在臀後夾毛毯，或雙膝拓寬留出胸腹下沉空間；每一次呼氣感受身軀更沉入墊子。", precautions: "膝蓋或腳踝扭傷者需墊高減壓；腹瀉或嚴重孕中晚期放寬雙腿或抱大抱枕練習。" },
-      { id: 60, code: "PPB-60", category: "seated", zh: "坐姿前彎式", en: "Seated Forward Fold", sanskrit: "Paschimottanasana", dots: 1, isHeat: false, duration: 45, benefits: "全面伸展人體背側淺層筋膜全鏈條、促進腹腔臟器消化、冷卻身心與安撫思緒。", cues: "坐姿雙腿向前併攏伸直腳尖勾起。吸氣雙臂高舉立直脊梁，呼氣以髖骨為軸向前延展前彎抓腳掌或小腿。", details: "保持下背部平直不弓駝，胸口主動追隨大腳趾方向延展；腿後側緊繃者請微屈雙膝並在臀下墊薄磚。", precautions: "急性腰椎滑脫或椎間盤突出者保持背直不深壓；哮喘或氣管敏感者胸口微抬不擠壓呼吸。" },
-      { id: 61, code: "PPB-61", category: "seated", zh: "半神猴 / 神猴一字馬", en: "Half Split / Full Split", sanskrit: "Ardha Hanumanasana", dots: 2, isHeat: false, duration: 40, sideMode: "dual", benefits: "深度拉長大腿後側膕繩肌與後腿前側髂腰肌、增強骨盆平衡對稱度與靈活度。", cues: "低弓步後將重心後移，後髖正對膝蓋上方90度，前腿向前伸直腳尖勾向天空，呼氣背平前屈覆向前腿。", details: "進階神猴劈腿時雙髖必須保持水平正對前長邊，切勿為觸地而扭曲骨盆向外翻開；手下隨時利用瑜珈磚支撐。", precautions: "鼠蹊或坐骨結節處撕裂傷者嚴禁過度延展。" },
-      { id: 62, code: "PPB-62", category: "seated", zh: "低位弓步式", en: "Low Lunge Pose", sanskrit: "Anjaneyasana", dots: 1, isHeat: false, duration: 35, sideMode: "dual", benefits: "深層解放後腿緊繃的髂腰肌與骨盆前傾、強化前腿足踝臀肌、開展胸椎。", cues: "單腳邁至前雙手間屈膝90度，後腿膝蓋與腳背著地。吸氣雙手扶膝或高舉過頭，骨盆沉向斜前下方。", details: "前膝始終維持在腳踝正上方不超過腳尖；微卷尾骨下沉以保護腰椎不承受過多擠壓感。", precautions: "後膝蓋不適者可在膝下加厚墊毛毯；心臟問題者手放前膝不舉過頭。" },
-      { id: 63, code: "PPB-63", category: "seated", zh: "鴿子式 (單腿鴿王式)", en: "Pigeon Pose", sanskrit: "Eka Pada Rajakapotasana", dots: 2, isHeat: false, duration: 50, sideMode: "dual", benefits: "「情緒解毒劑」，深層開展前腿臀外側與梨狀肌、拉長後腿前側、極致釋放壓力。", cues: "由下犬式將前小腿橫置於墊前，前膝靠近同側手腕，前腳掌微勾。後腿筆直向後貼地，呼氣慢慢向前趴臥延展。", details: "骨盆保持水平向地，若前側臀部懸空請務必塞一塊瑜珈磚或毛毯支撐，避免身體傾斜滑向單側折傷膝蓋。", precautions: "半月板受傷或膝關節韌帶急性受傷者，改為仰臥4字形 (臥鴿式) 練習。" },
-      { id: 64, code: "PPB-64", category: "seated", zh: "坐姿分腿前彎式", en: "Seated Wide-Legged Fold", sanskrit: "Upavistha Konasana", dots: 2, isHeat: false, duration: 45, benefits: "深層拉長大腿內側內收肌群與腿後腱肌、活化骨盆底循環與內臟器官、沉靜身心神經。", cues: "雙腿向兩側盡量打開成V字，雙腳腳趾與膝蓋朝正上方天花板。吸氣延展脊背，呼氣雙手向前緩慢爬行前彎。", details: "骨盆保持微微前傾，切勿含胸駝背下壓；若後側太緊導致骨盆後滾，在坐骨下墊磚微屈雙膝。", precautions: "內收肌群或坐骨滑囊拉傷者縮小雙腿夾角；嚴重背痛者保持身體直立即可。" },
-      { id: 65, code: "PPB-65", category: "seated", zh: "船式", en: "Boat Pose", sanskrit: "Navasana", dots: 2, isHeat: true, duration: 30, benefits: "高強度鍛鍊腹直肌與深層腹橫肌、強化髂腰肌與豎脊肌力量、鍛鍊平衡意志。", cues: "坐姿雙手抱膝後側，微向後仰平衡在坐骨與尾骨之間。吸氣挺胸提小腿平行地面，穩定後向前平舉雙臂成V字。", details: "進階者可將雙腿完全伸直；核心持續向脊椎方向收緊，後背始終維持平直展胸，切勿含胸拱腰以防壓迫腰椎。", precautions: "下背劇痛、氣喘發作或懷孕期間避免進行；初學者維持屈膝即可。" },
-      { id: 66, code: "PPB-66", category: "seated", zh: "頭碰膝單腿前彎式", en: "Head-to-Knee Forward Bend", sanskrit: "Janu Sirsasana", dots: 1, isHeat: false, duration: 40, sideMode: "dual", benefits: "非對稱伸展單側腿後腱與背側肌群、溫和刺激肝脾腎內臟、鎮定大腦與舒緩焦慮。", cues: "坐姿一腿向前伸直，另一腿屈膝腳掌貼緊直腿大腿內側。吸氣雙手舉高微轉朝向直腿，呼氣向前深長前屈抓腳掌。", details: "骨盆保持水平朝正前，直腿腳尖向上勾緊；每一次呼氣將胸口沿著小腿脛骨向前延伸，而非盲目低頭觸膝。", precautions: "彎曲腿膝蓋疼痛者在膝下墊磚支撐；腹瀉或嚴重腰椎病變者輕度直脊練習即可。" },
-      { id: 67, code: "PPB-67", category: "seated", zh: "瑪里奇坐姿扭轉式", en: "Seated Twist", sanskrit: "Ardha Marichyasana", dots: 2, isHeat: false, duration: 35, sideMode: "dual", benefits: "深層按摩腹腔內部器官改善消化便秘、活化脊柱回旋關節、矯正骨盆與脊椎非對稱側彎。", cues: "雙腿向前，右腿屈膝踩在左大腿外側。吸氣左臂沖天延展脊柱，呼氣轉體向右，左手肘抵在右膝外側轉胸向後看。", details: "兩側坐骨均勻貼實墊子不歪斜；右手靠近臀後立地輔助向上生長，扭轉完全由胸椎帶動，不刻意扭脖子。", precautions: "懷孕期間嚴禁深封閉式扭轉；下背急性刺痛時改做仰臥輕扭轉。" },
-      { id: 68, code: "PPB-68", category: "balance", zh: "半月式", en: "Half Moon", sanskrit: "Ardha Chandrasana", dots: 2, isHeat: false, duration: 35, sideMode: "dual", benefits: "大幅強化足踝膝關節與側臀肌 (臀中肌)、鍛鍊側腹核心、極致開展胸膛與骨盆。", cues: "由三角式前膝微屈，指尖向前邁一步點地於小腳趾斜前方。吸氣抬起後腿平行地面，上方胸與手臂向天完全翻轉展開。", details: "浮空後腿腳跟向後用力蹬踢勾腳尖，如同踩在牆上；下方手指輕點地面不承托全部重量，重心在支撐腳。", precautions: "平衡不穩者手下墊磚，視線看地面即可；頸椎病變者目光禁止向上看天。" },
-      { id: 69, code: "PPB-69", category: "balance", zh: "站姿劈腿式", en: "Standing Split", sanskrit: "Urdhva Prasarita Eka Padasana", dots: 3, isHeat: false, duration: 35, sideMode: "dual", benefits: "強烈拉長支撐腿膕繩肌與小腿、強化抬腿側臀大肌、作為倒立練習前導體位。", cues: "由前彎雙手推地，重心移至單腿。吸氣將另一腿筆直向天空方向踢高，上半身順勢向支撐腿深層折疊垂落。", details: "雙手可向後抱住支撐腳踝加深強度；骨盆保持水平微向地，視線放鬆看後方膝蓋或腳掌。", precautions: "大腿後側或坐骨拉傷者避免強踢；孕期禁做壓迫式倒置。" },
-      { id: 70, code: "PPB-70", category: "advanced", zh: "超級戰士式", en: "Super Soldier", sanskrit: "Viparita Parivrtta Surya Yantrasana", dots: 4, isHeat: false, duration: 30, sideMode: "dual", benefits: "高階柔韌與力量整合體位，深層扭轉胸廓、極致拉伸膕繩肌與開展肩關節。", cues: "前彎中將一側手臂深鑽過支撐腿膝後扣抓浮空腳腳背；屈浮空腿朝天踢展，轉胸抬頭探出空間觀天。", details: "要求極高的單腿平衡與胸肩螺旋旋轉技巧；支撐腿微屈以保持核心控制力，配合平緩呼吸。", precautions: "無資深導師指引或腿後側未充分熱身者切勿盲目強抓腳背。" },
-      { id: 71, code: "PPB-71", category: "advanced", zh: "手肘倒立 (孔雀起舞式)", en: "Forearm Stand", sanskrit: "Pincha Mayurasana", dots: 4, isHeat: true, duration: 35, benefits: "極致考驗肩膀推力與上背前鋸肌、擺脫手腕負擔的強效倒立、提升神經意志與大腦供氧。", cues: "海豚式起步，前臂平行貼地同肩寬。低頭看兩手指間地面，單腿後蹬輕跳浮空，收緊腹橫肌使身體垂直立起。", details: "前臂手肘向下死死壓實推地，肩膀垂直頂在手肘上方不前傾；下肋骨向內收攏防腰椎過度超伸香蕉背。", precautions: "肩部受損、頸傷或高血壓患者請在牆邊利用瑜珈磚夾肘安全練習。" },
-      { id: 72, code: "PPB-72", category: "advanced", zh: "手倒立 (手支撐倒立)", en: "Handstand", sanskrit: "Adho Mukha Vrksasana", dots: 4, isHeat: true, duration: 35, benefits: "全身力量的巔峰對決，鍛鍊手掌推地力、肩帶核心鎖定、翻轉恐懼提振無限自信。", cues: "雙手與肩同寬撐地指尖微抓墊。肩膀推至手腕上方，單腿蹬地向上擺起，雙腿在空中併攏夾緊垂直向上拔高。", details: "手腕在肩膀正下方垂直，肩胛骨做最大程度的向上聳肩推地抵抗重力；肋骨與腹肌收束成一直線。", precautions: "腕部脆弱或肩關節有受傷病史者避免盲目踢牆；請在導師協助或牆壁保護下進行。" },
-      { id: 73, code: "PPB-73", category: "advanced", zh: "天堂鳥式", en: "Bird of Paradise Pose", sanskrit: "Svarga Dvijasana", dots: 4, isHeat: false, duration: 35, sideMode: "dual", benefits: "融會縛手開肩、單腿立姿極限平衡與腿部柔韌伸展之華麗高階體位。", cues: "由縛側角式雙手扣緊腿後，重心轉移至後腳。屈支撐腿緩慢直立起身上半身，隨後將纏繞腿向側上方筆直蹬直開展。", details: "立身時背部保持平整挺拔，雙肩向後沈降展開；若腿無法伸直保持屈膝即可，專注立直單腿的平穩度。", precautions: "骨盆受傷、膕繩肌撕裂或踝部無力者避免嘗試此體位。" },
-      { id: 74, code: "PPB-74", category: "advanced", zh: "飛鴿式", en: "Flying Pigeon", sanskrit: "Pada Galavasana", dots: 4, isHeat: true, duration: 25, sideMode: "dual", benefits: "手臂平衡與深度開髖的極致融合，強化胸前推力、腹部懸提力與臀中肌外展力。", cues: "由站姿4字形前屈雙手撐地，將橫跨腳腳背像掛鉤般緊扣對側上臂肱三頭肌外側。重心前傾，後腿懸空向後筆直蹬出起飛。", details: "目光向前看而非向下，手臂維持如四柱般90度支撐平台，腳踝持續死扣大臂不鬆脫。", precautions: "膝關節外側韌帶損傷、腕關節急性疼痛者禁止練習。" },
-      { id: 75, code: "PPB-75", category: "cooldown", zh: "臥姿扭轉式", en: "Supine Twist", sanskrit: "Supta Matsyendrasana", dots: 1, isHeat: false, duration: 40, sideMode: "dual", benefits: "溫和中和後彎與前彎後的腰椎壓力、放鬆胸廓與側肋、誘導身心進入深沉寧靜。", cues: "仰臥一腿伸直，另一腿屈膝越過身體倒向對側地面。雙臂向側展開成T字或仙人掌手，頭轉向對側肩膀。", details: "雙側肩膀維持緊貼地面不懸空；若屈膝側膝蓋無法貼地，可在膝下墊一塊抱枕支撐，享受呼吸深度釋放。", precautions: "薦髂關節 (SI Joint) 不穩定或發炎者避免深壓，雙膝屈曲併攏一起扭轉。" },
-      { id: 76, code: "PPB-76", category: "cooldown", zh: "仰臥束角式", en: "Reclining Bound Angle Pose", sanskrit: "Supta Baddha Konasana", dots: 1, isHeat: false, duration: 60, benefits: "經典陰瑜珈與修復體位，被動釋放大腿內收肌與骨盆緊繃、安撫心跳降血壓助眠。", cues: "仰臥腳底併攏，雙膝向外自然垂落。雙手放身體兩側掌心朝上，或一手放腹部一手放胸口感知呼吸起伏。", details: "可在大腿膝蓋下方各放抱枕給予支撐，避免腹股溝肌腱被動拉扯拉傷；閉目進行深緩呼吸。", precautions: "鼠蹊急性拉傷者以磚支撐；孕期中晚期背下墊斜向長抱枕抬高頭胸防下腔靜脈受壓。" },
-      { id: 77, code: "PPB-77", category: "cooldown", zh: "快樂嬰兒式", en: "Happy Baby", sanskrit: "Ananda Balasana", dots: 1, isHeat: false, duration: 45, benefits: "溫柔伸展下背薦椎與臀部、解放髖關節屈曲外展深度、撫平疲憊身心與腸胃脹氣。", cues: "仰臥雙膝分開屈向腋窩兩側，小腿垂直地面。雙手從外側抓住雙腳外側腳緣，呼氣微拉腳底使雙膝向下沉降。", details: "保持尾骨與薦椎整面平整貼在墊子上不捲起離地，雙肩放鬆貼地，可輕微左右滾動按摩腰背筋膜。", precautions: "頸椎不適者可在頭下墊薄毛毯；膝蓋受損者改抓腳踝或大腿後側。" },
-      { id: 78, code: "PPB-78", category: "cooldown", zh: "抱膝壓腿式", en: "Knees to Chest", sanskrit: "Apanasana", dots: 1, isHeat: false, duration: 40, benefits: "所有後彎體位的完美反向中和體位，舒緩腰部肌肉痙攣、按摩升降結腸排出脹氣。", cues: "仰臥屈雙膝，雙手環抱小腿脛骨或大腿後側。呼氣慢慢將雙大腿壓向胸腹部，深長呼氣放鬆腰椎。", details: "放鬆雙肩與後頸部，下巴微收；可溫和左右滾動骨盆以釋放薦骨區域壓力。", precautions: "孕婦避免直接壓迫腹部，將雙膝分開向兩側腋下抱合。" },
-      { id: 79, code: "PPB-79", category: "cooldown", zh: "雙腿靠牆式", en: "Feet Up the Wall", sanskrit: "Viparita Karani", dots: 1, isHeat: false, duration: 60, benefits: "被動倒立聖品，促進下肢靜脈血液回流消腿腫、降心率安撫神經、徹底消除身心慢性疲憊。", cues: "臀部緊貼牆角側坐後轉身躺下，雙腿順著牆壁垂直向上搭起伸展。雙臂在兩側自然展開，閉上雙眼調息。", details: "可在薦椎骨盆下方墊一塊抱枕或厚毛毯以給予微幅倒立提升，雙膝保持自然微彈性不繃緊。", precautions: "青光眼急性期或嚴重下背痛不適者墊厚毯或改為平躺屈膝放椅子上。" },
-      { id: 80, code: "PPB-80", category: "cooldown", zh: "大休息 (攤屍式)", en: "Savasana", sanskrit: "Savasana", dots: 1, isHeat: false, duration: 90, benefits: "整堂課的精華收割，肌肉自律神經系統全面歸零重置、引導大腦進入 Theta 波深層修復。", cues: "平躺雙腿微微分開，腳尖自然向外癱軟。雙臂在身體兩側微張掌心向上。完全釋放對呼吸的控制，全然臣服放鬆。", details: "從腳趾、膝蓋、骨盆、腹部、胸口、手指至臉部雙頰下顎逐一掃描放鬆；腰不適者膝下墊大抱枕。", precautions: "孕中晚期避免長時間仰臥，應採左側臥胎兒式並於雙膝間夾枕頭。" },
-      { id: 81, code: "PPB-81", category: "cooldown", zh: "胎兒式", en: "Fetal Pose", sanskrit: "Parsva Savasana", dots: 1, isHeat: false, duration: 30, benefits: "由深沉休息重返清醒世界的安全過渡、喚醒原始胚胎保護安全感、有助腸道自然順應蠕動。", cues: "由大休息輕微動動手指腳趾，屈膝緩慢翻轉側臥至右側（或舒適一側），手前臂枕於頭下當枕頭蜷縮小憩。", details: "在此停留至少5次安穩呼吸，心中默默為自己今天的練習表達感恩，準備好再用雙手推地慢慢坐起。", precautions: "肩部受損者在頭下方加墊一塊瑜珈磚或枕頭。" },
-      { id: 82, code: "PPB-82", category: "cooldown", zh: "合十禮 (結束敬禮)", en: "Namaste", sanskrit: "Anjali Mudra", dots: 1, isHeat: false, duration: 20, benefits: "平定思緒意念定錨、收斂整場練習之內在能量、表達對身心生命與自我的敬意與感謝。", cues: "端坐，雙手於胸前合十，大拇指輕觸胸骨正中。閉目吸氣延展脊柱，呼氣低頭收下巴致意：Namaste。", details: "帶著平靜與喜悅的光芒重回日常生活之中。", precautions: "膝關節不適者坐磚或坐在椅子上進行。" }
-    ];
-
-    /* 官方 8 大預設課表庫[cite: 131] */
-    const PRESET_SEQUENCES = [
-      { id: "hips_l1", name: "【開髖】骨盆正位靈活流動 (Level 1)", duration: "30-40m", poses: [2, 4, 6, 10, 50, 11, 62, 61, 11, 17, 20, 21, 23, 22, 30, 31, 65, 60, 38, 75, 76, 80] },
-      { id: "hips_l2", name: "【開髖】下盤穩定深層外開 (Level 2)", duration: "30-45m", poses: [8, 2, 5, 3, 1, 11, 16, 62, 17, 32, 13, 29, 34, 37, 48, 14, 77, 55, 78, 45, 80] },
-      { id: "neck_shoulder_l1", name: "【肩頸】低頭族釋壓放鬆 (Level 1)", duration: "25-35m", poses: [8, 5, 4, 7, 4, 50, 14, 9, 1, 9, 37, 59, 75, 78, 45, 75, 78, 80] },
-      { id: "chest_back_l1", name: "【開胸】胸椎活動活力後彎 (Level 1)", duration: "20-30m", poses: [4, 2, 1, 9, 34, 36, 9, 59, 48, 14, 13, 15, 16, 15, 16, 13, 14, 34, 36, 59, 80] },
-      { id: "meditation_l1", name: "【冥想前導】Langhana 呼氣安撫", duration: "15-20m", poses: [80, 78, 14, 13, 15, 14, 13, 30, 22, 62, 66, 38, 67, 6, 82] },
-      { id: "recovery_l1", name: "【運動後】全身體能修復排酸", duration: "15-20m", poses: [59, 1, 48, 14, 13, 62, 61, 62, 34, 36, 37, 59, 14, 13, 15, 50, 77, 38, 75, 80] },
-      { id: "full_moon", name: "【滿月流動】心輪敞開情緒釋放", duration: "25-35m", poses: [59, 34, 48, 17, 30, 20, 21, 18, 68, 62, 36, 37, 59, 40, 59, 60, 50, 78, 75, 76, 80] },
-      { id: "new_moon", name: "【新月儀式】內觀定錨誓願沉澱", duration: "25-30m", poses: [76, 77, 75, 6, 1, 48, 62, 61, 62, 59, 7, 48, 51, 63, 67, 44, 45, 41, 78, 80, 81, 82] }
-    ];
-
-    let currentSequence = [];
-    let activeFilterCat = "all";
-    let activeSearchKeyword = "";
-    let activeTab = "library"; // 'library' | 'sequence'
-
-    // 播放狀態
-    let playerIndex = 0;
-    let playerSecondsRemaining = 0;
-    let playerTimerId = null;
-    let isPlayerPaused = false;
-    let audioCtx = null;
-
-    // 西藏頌缽合成音
-    function playTibetanBowlSound() {
-      try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const now = audioCtx.currentTime;
-        [180, 360, 540, 724].forEach((f, idx) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(f, now);
-          const initialVol = 0.15 / (idx + 1);
-          gain.gain.setValueAtTime(initialVol, now);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now);
-          osc.stop(now + 3.3);
-        });
-      } catch (e) {
-        console.warn(e);
-      }
-    }
-
-    // 語音播報
-    function speakText(text, lang = "zh") {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      if (!text) return;
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.95;
-      if (lang === "en") u.lang = "en-US";
-      else if (lang === "sa") u.lang = "hi-IN";
-      else u.lang = "zh-TW";
-      window.speechSynthesis.speak(u);
-    }
-
-    function triggerVoiceSequence(poseItem) {
-      const langChoice = document.getElementById("voice-lang-select").value;
-      const enableSanskrit = document.getElementById("voice-sanskrit-toggle").checked;
-
-      if (enableSanskrit && poseItem.sanskrit) {
-        speakText(poseItem.sanskrit, "sa");
-      }
-
-      setTimeout(() => {
-        let sideZh = "";
-        let sideEn = "";
-        if (poseItem.selectedSide === "left") { sideZh = "，左側"; sideEn = ", Left side"; }
-        if (poseItem.selectedSide === "right") { sideZh = "，右側"; sideEn = ", Right side"; }
-
-        if (langChoice === "en") {
-          speakText(`${poseItem.en}${sideEn}. ${poseItem.cues}`, "en");
-        } else if (langChoice === "dual") {
-          speakText(`${poseItem.zh}${sideZh}。${poseItem.en}。${poseItem.cues}`, "zh");
-        } else {
-          speakText(`${poseItem.zh}${sideZh}。${poseItem.cues}`, "zh");
-        }
-      }, enableSanskrit ? 1400 : 100);
-    }
-
-    /* 手機 Tab 切換 */
-    function switchTab(tab) {
-      activeTab = tab;
-      const libView = document.getElementById("view-library");
-      const seqView = document.getElementById("view-sequence");
-      const btnLib = document.getElementById("tab-library");
-      const btnSeq = document.getElementById("tab-sequence");
-
-      if (tab === "library") {
-        libView.classList.remove("hidden");
-        seqView.classList.add("hidden");
-        btnLib.className = "tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px]";
-        btnSeq.className = "tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px] relative";
-      } else {
-        libView.classList.add("hidden");
-        seqView.classList.remove("hidden");
-        btnSeq.className = "tab-btn flex flex-col items-center gap-1 text-amber-700 font-bold text-[11px] relative";
-        btnLib.className = "tab-btn flex flex-col items-center gap-1 text-stone-400 font-medium text-[11px]";
-      }
-    }
-
-    document.getElementById("tab-library").addEventListener("click", () => switchTab("library"));
-    document.getElementById("tab-sequence").addEventListener("click", () => switchTab("sequence"));
-
-    /* 渲染動作庫列表 */
-    function renderPoseGrid() {
-      const container = document.getElementById("pose-grid");
-      container.innerHTML = "";
-
-      const filtered = YOGA_ASANAS.filter(p => {
-        const matchCat = (activeFilterCat === "all") || (p.category === activeFilterCat);
-        const search = activeSearchKeyword.toLowerCase().trim();
-        const matchSearch = !search || 
-          p.zh.toLowerCase().includes(search) ||
-          p.en.toLowerCase().includes(search) ||
-          p.sanskrit.toLowerCase().includes(search) ||
-          p.cues.toLowerCase().includes(search);
-        return matchCat && matchSearch;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="py-12 text-center text-xs text-stone-400">查無相符體位</div>`;
-        return;
-      }
-
-      filtered.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "p-3 bg-white border border-stone-200/90 rounded-2xl flex items-center justify-between gap-3 shadow-sm hover:border-amber-600/50 transition";
-        
-        let dotsHtml = `<div class="flex items-center text-amber-600 text-[10px]">`;
-        for (let i = 0; i < p.dots; i++) dotsHtml += `●`;
-        dotsHtml += `</div>`;
-
-        card.innerHTML = `
-          <div class="flex-1 min-w-0 cursor-pointer btn-open-detail">
-            <div class="flex items-center gap-1.5 mb-0.5">
-              <span class="text-[9px] font-bold text-stone-400">#${String(p.id).padStart(2, '0')}</span>
-              ${dotsHtml}
-              ${p.isHeat ? '<i class="ph-fill ph-fire text-amber-600 text-xs"></i>' : ''}
-            </div>
-            <h4 class="font-bold text-sm text-stone-800 truncate">${p.zh}</h4>
-            <p class="text-[11px] text-stone-500 font-medium truncate">${p.en}</p>
-            <p class="text-[10px] text-amber-800/80 italic font-serif truncate mt-0.5">${p.sanskrit}</p>
-          </div>
-
-          <div class="flex items-center gap-2 shrink-0">
-            <button class="btn-open-detail p-2 text-stone-400 hover:text-stone-700 bg-stone-50 rounded-xl" title="詳情">
-              <i class="ph ph-info text-base"></i>
-            </button>
-            <button class="btn-add-pose px-3 py-2 bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1 shadow-sm active:scale-95">
-              <i class="ph ph-plus text-sm"></i>
-              <span>加入</span>
-            </button>
-          </div>
-        `;
-
-        card.querySelectorAll(".btn-open-detail").forEach(el => el.addEventListener("click", () => openPoseModal(p.id)));
-        card.querySelector(".btn-add-pose").addEventListener("click", () => addPoseToSequence(p.id));
-
-        container.appendChild(card);
-      });
-    }
-
-    /* 序列操作 */
-    function addPoseToSequence(poseId, side = "both") {
-      const basePose = YOGA_ASANAS.find(p => p.id === poseId);
-      if (!basePose) return;
-
-      currentSequence.push({
-        uniqueId: "seq_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
-        poseId: basePose.id,
-        zh: basePose.zh,
-        en: basePose.en,
-        sanskrit: basePose.sanskrit,
-        cues: basePose.cues,
-        duration: basePose.duration,
-        selectedSide: side,
-        hasSideOption: !!basePose.sideMode
-      });
-
-      renderSequenceList();
-
-      // 手機震動回饋 (若支援)
-      if (navigator.vibrate) navigator.vibrate(30);
-
-      // 短暫顯示 Badge
-      const badge = document.getElementById("tab-badge");
-      badge.innerText = currentSequence.length;
-      badge.classList.remove("hidden");
-    }
-
-    function renderSequenceList() {
-      const container = document.getElementById("sequence-container");
-      const emptyState = document.getElementById("sequence-empty-state");
-
-      if (currentSequence.length === 0) {
-        emptyState.classList.remove("hidden");
-        container.innerHTML = "";
-        container.appendChild(emptyState);
-        updateSequenceHeaderInfo();
-        document.getElementById("tab-badge").classList.add("hidden");
-        return;
-      }
-
-      emptyState.classList.add("hidden");
-      container.innerHTML = "";
-
-      currentSequence.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "bg-white p-3 rounded-2xl border border-stone-200/90 shadow-sm space-y-2";
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="w-5 h-5 rounded-md bg-stone-100 flex items-center justify-center font-bold text-[10px] text-stone-600 shrink-0">
-                ${index + 1}
-              </span>
-              <div class="min-w-0">
-                <h4 class="font-bold text-xs text-stone-800 truncate">${item.zh} <span class="font-normal text-stone-400">/ ${item.en}</span></h4>
-                <p class="text-[10px] text-amber-800/80 italic font-serif truncate">${item.sanskrit}</p>
-              </div>
-            </div>
-
-            <!-- 時間調整與刪除 -->
-            <div class="flex items-center gap-1.5 shrink-0">
-              <div class="flex items-center bg-stone-50 border border-stone-200 rounded-lg px-1.5 py-0.5">
-                <input type="number" min="5" max="600" step="5" class="duration-input w-10 text-center text-xs font-semibold bg-transparent text-stone-700" value="${item.duration}">
-                <span class="text-[10px] text-stone-400">秒</span>
-              </div>
-              <button class="btn-delete p-1 text-stone-400 hover:text-rose-600">
-                <i class="ph ph-trash text-base"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- 左右側切換與上移下移按鈕 -->
-          <div class="flex items-center justify-between pt-1 border-t border-stone-100 text-xs">
-            <div class="flex items-center gap-2">
-              ${item.hasSideOption ? `
-                <select class="side-selector text-[11px] bg-amber-50 border border-amber-200 text-amber-800 rounded px-1.5 py-0.5">
-                  <option value="both" ${item.selectedSide === 'both' ? 'selected' : ''}>雙側</option>
-                  <option value="left" ${item.selectedSide === 'left' ? 'selected' : ''}>左側 (Left)</option>
-                  <option value="right" ${item.selectedSide === 'right' ? 'selected' : ''}>右側 (Right)</option>
-                </select>
-              ` : '<span class="text-[10px] text-stone-400">對稱體位</span>'}
-            </div>
-
-            <div class="flex items-center gap-2 text-stone-400">
-              <button class="btn-move-up p-1 hover:text-stone-700" ${index === 0 ? 'disabled class="opacity-30 p-1"' : ''} title="上移">
-                <i class="ph ph-arrow-up text-sm"></i>
-              </button>
-              <button class="btn-move-down p-1 hover:text-stone-700" ${index === currentSequence.length - 1 ? 'disabled class="opacity-30 p-1"' : ''} title="下移">
-                <i class="ph ph-arrow-down text-sm"></i>
-              </button>
-              <button class="btn-dup p-1 hover:text-amber-700" title="複製換側">
-                <i class="ph ph-copy text-sm"></i>
-              </button>
-            </div>
-          </div>
-        `;
-
-        if (item.hasSideOption) {
-          card.querySelector(".side-selector").addEventListener("change", (e) => { item.selectedSide = e.target.value; });
-        }
-        card.querySelector(".duration-input").addEventListener("change", (e) => {
-          item.duration = parseInt(e.target.value) || 30;
-          updateSequenceHeaderInfo();
-        });
-        card.querySelector(".btn-delete").addEventListener("click", () => {
-          currentSequence.splice(index, 1);
-          renderSequenceList();
-        });
-        card.querySelector(".btn-move-up").addEventListener("click", () => {
-          if (index > 0) {
-            const t = currentSequence[index];
-            currentSequence[index] = currentSequence[index - 1];
-            currentSequence[index - 1] = t;
-            renderSequenceList();
-          }
-        });
-        card.querySelector(".btn-move-down").addEventListener("click", () => {
-          if (index < currentSequence.length - 1) {
-            const t = currentSequence[index];
-            currentSequence[index] = currentSequence[index + 1];
-            currentSequence[index + 1] = t;
-            renderSequenceList();
-          }
-        });
-        card.querySelector(".btn-dup").addEventListener("click", () => {
-          currentSequence.splice(index + 1, 0, {
-            ...item,
-            uniqueId: "seq_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
-            selectedSide: item.selectedSide === "left" ? "right" : (item.selectedSide === "right" ? "left" : "both")
-          });
-          renderSequenceList();
-        });
-
-        container.appendChild(card);
-      });
-
-      updateSequenceHeaderInfo();
-    }
-
-    function updateSequenceHeaderInfo() {
-      document.getElementById("seq-pose-count").innerText = `${currentSequence.length} 體位`;
-      document.getElementById("tab-badge").innerText = currentSequence.length;
-      if (currentSequence.length > 0) document.getElementById("tab-badge").classList.remove("hidden");
-      else document.getElementById("tab-badge").classList.add("hidden");
-
-      const totalSec = currentSequence.reduce((acc, cur) => acc + (parseInt(cur.duration) || 0), 0);
-      const min = Math.floor(totalSec / 60);
-      const sec = totalSec % 60;
-      document.getElementById("seq-total-time").innerText = `${min}分 ${sec}秒`;
-
-      const heatCount = currentSequence.filter(item => {
-        const p = YOGA_ASANAS.find(x => x.id === item.poseId);
-        return p && p.isHeat;
-      }).length;
-
-      if (heatCount >= 6) document.getElementById("seq-heat-indicator").innerText = "高發熱 🔥";
-      else if (heatCount >= 2) document.getElementById("seq-heat-indicator").innerText = "中度鍛鍊";
-      else document.getElementById("seq-heat-indicator").innerText = "溫和修復";
-    }
-
-    /* Modal 操作 */
-    let currentModalPoseId = null;
-    function openPoseModal(poseId) {
-      const p = YOGA_ASANAS.find(x => x.id === poseId);
-      if (!p) return;
-      currentModalPoseId = p.id;
-      document.getElementById("modal-card-id").innerText = `#${String(p.id).padStart(2, '0')}`;
-      document.getElementById("modal-zh-name").innerText = p.zh;
-      document.getElementById("modal-en-name").innerText = p.en;
-      document.getElementById("modal-sanskrit-name").innerText = p.sanskrit;
-      document.getElementById("modal-benefits").innerText = p.benefits;
-      document.getElementById("modal-cues").innerText = p.cues;
-      document.getElementById("modal-details").innerText = p.details;
-      document.getElementById("modal-precautions").innerText = p.precautions;
-      document.getElementById("pose-detail-modal").classList.remove("hidden");
-    }
-
-    document.getElementById("modal-close-btn").addEventListener("click", () => {
-      document.getElementById("pose-detail-modal").classList.add("hidden");
-    });
-    document.getElementById("modal-add-btn").addEventListener("click", () => {
-      if (currentModalPoseId) {
-        addPoseToSequence(currentModalPoseId);
-        document.getElementById("pose-detail-modal").classList.add("hidden");
-      }
-    });
-    document.getElementById("modal-voice-btn").addEventListener("click", () => {
-      if (currentModalPoseId) {
-        const p = YOGA_ASANAS.find(x => x.id === currentModalPoseId);
-        if (p) triggerVoiceSequence(p);
-      }
-    });
-
-    /* 播放器邏輯 */
-    function openFlowPlayer() {
-      if (currentSequence.length === 0) {
-        alert("請先在序列中加入體位動作！");
-        return;
-      }
-      playerIndex = 0;
-      isPlayerPaused = false;
-      document.getElementById("flow-player-modal").classList.remove("hidden");
-      loadPlayerCurrentPose();
-    }
-
-    function closeFlowPlayer() {
-      clearInterval(playerTimerId);
-      window.speechSynthesis.cancel();
-      document.getElementById("flow-player-modal").classList.add("hidden");
-    }
-
-    function loadPlayerCurrentPose() {
-      clearInterval(playerTimerId);
-      if (playerIndex >= currentSequence.length) {
-        playTibetanBowlSound();
-        speakText("恭喜完成今日練習。Namaste。", "zh");
-        alert("🎉 練習順利完成！Namaste！");
-        closeFlowPlayer();
-        return;
-      }
-
-      const item = currentSequence[playerIndex];
-      playerSecondsRemaining = parseInt(item.duration) || 30;
-
-      document.getElementById("player-seq-name").innerText = document.getElementById("sequence-title-input").value;
-      document.getElementById("player-pose-index").innerText = `體位 ${playerIndex + 1} / ${currentSequence.length}`;
-      document.getElementById("player-sanskrit-tag").innerText = item.sanskrit;
-      document.getElementById("player-pose-title").innerText = item.zh;
-
-      let sideStr = "雙側對稱";
-      if (item.selectedSide === "left") sideStr = "左側 (Left)";
-      if (item.selectedSide === "right") sideStr = "右側 (Right)";
-      document.getElementById("player-pose-sub").innerText = `${item.en} • ${sideStr}`;
-      document.getElementById("player-cues-text").innerText = item.cues;
-
-      const nextItem = currentSequence[playerIndex + 1];
-      document.getElementById("player-next-pose-name").innerText = nextItem ? `${nextItem.zh} (${nextItem.en})` : "全序列完成 (Namaste)";
-
-      playTibetanBowlSound();
-      triggerVoiceSequence(item);
-
-      updatePlayerProgressCircle(item.duration, playerSecondsRemaining);
-
-      playerTimerId = setInterval(() => {
-        if (!isPlayerPaused) {
-          playerSecondsRemaining--;
-          updatePlayerProgressCircle(item.duration, playerSecondsRemaining);
-
-          if (playerSecondsRemaining <= 0) {
-            clearInterval(playerTimerId);
-            playerIndex++;
-            loadPlayerCurrentPose();
-          }
-        }
-      }, 1000);
-    }
-
-    function updatePlayerProgressCircle(total, left) {
-      document.getElementById("player-time-left").innerText = Math.max(0, left);
-      const circle = document.getElementById("player-progress-circle");
-      const perimeter = 276.46;
-      const ratio = Math.max(0, left) / total;
-      circle.style.strokeDashoffset = perimeter * (1 - ratio);
-    }
-
-    document.getElementById("tab-play").addEventListener("click", openFlowPlayer);
-    document.getElementById("player-close-btn").addEventListener("click", closeFlowPlayer);
-    document.getElementById("player-sound-test").addEventListener("click", playTibetanBowlSound);
-    document.getElementById("player-prev-btn").addEventListener("click", () => {
-      if (playerIndex > 0) { playerIndex--; loadPlayerCurrentPose(); }
-    });
-    document.getElementById("player-next-btn").addEventListener("click", () => {
-      playerIndex++;
-      loadPlayerCurrentPose();
-    });
-    document.getElementById("player-toggle-btn").addEventListener("click", () => {
-      isPlayerPaused = !isPlayerPaused;
-      const icon = document.getElementById("player-toggle-icon");
-      icon.className = isPlayerPaused ? "ph-fill ph-play text-2xl" : "ph-fill ph-pause text-2xl";
-    });
-
-    /* 頂部選單與預設課表載入 */
-    document.getElementById("btn-top-menu").addEventListener("click", (e) => {
-      e.stopPropagation();
-      document.getElementById("top-menu-dropdown").classList.toggle("hidden");
-    });
-    document.addEventListener("click", () => {
-      document.getElementById("top-menu-dropdown").classList.add("hidden");
-    });
-
-    function initPresets() {
-      const select = document.getElementById("preset-sequence-select");
-      PRESET_SEQUENCES.forEach(ps => {
-        const opt = document.createElement("option");
-        opt.value = ps.id;
-        opt.innerText = `${ps.name} (${ps.duration})`;
-        select.appendChild(opt);
-      });
-
-      select.addEventListener("change", (e) => {
-        const found = PRESET_SEQUENCES.find(x => x.id === e.target.value);
-        if (found) {
-          document.getElementById("sequence-title-input").value = found.name;
-          currentSequence = [];
-          found.poses.forEach(id => addPoseToSequence(id));
-        }
-      });
-    }
-
-    document.getElementById("btn-save-seq").addEventListener("click", () => {
-      if (currentSequence.length === 0) return alert("序列為空！");
-      const title = document.getElementById("sequence-title-input").value;
-      localStorage.setItem("yogaflow_custom_seq", JSON.stringify({ title, sequence: currentSequence }));
-      alert(`已將「${title}」儲存至手機！`);
-    });
-
-    document.getElementById("btn-export-json").addEventListener("click", () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
-        title: document.getElementById("sequence-title-input").value,
-        sequence: currentSequence
-      }, null, 2));
-      const a = document.createElement('a');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", `yoga_sequence_${Date.now()}.json`);
-      a.click();
-    });
-
-    document.getElementById("btn-clear-seq").addEventListener("click", () => {
-      if (confirm("確定要清空當前所有序列嗎？")) {
-        currentSequence = [];
-        renderSequenceList();
-      }
-    });
-
-    // 篩選按鈕
-    document.querySelectorAll(".cat-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        document.querySelectorAll(".cat-btn").forEach(b => {
-          b.className = "cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-white border border-stone-200 text-stone-600";
-        });
-        e.target.className = "cat-btn px-2.5 py-1 rounded-lg font-medium whitespace-nowrap bg-stone-800 text-white";
-        activeFilterCat = e.target.getAttribute("data-cat");
-        renderPoseGrid();
-      });
-    });
-
-    document.getElementById("search-input").addEventListener("input", (e) => {
-      activeSearchKeyword = e.target.value;
-      renderPoseGrid();
-    });
-
-    // 初始化
-    window.addEventListener("DOMContentLoaded", () => {
-      initPresets();
-      renderPoseGrid();
-      const saved = localStorage.getItem("yogaflow_custom_seq");
-      if (saved) {
-        try {
-          const p = JSON.parse(saved);
-          document.getElementById("sequence-title-input").value = p.title || "上次儲存課表";
-          currentSequence = p.sequence || [];
-          renderSequenceList();
-        } catch (e) {}
-      } else {
-        const d = PRESET_SEQUENCES[0];
-        document.getElementById("sequence-title-input").value = d.name;
-        d.poses.slice(0, 6).forEach(id => addPoseToSequence(id));
-      }
-    });
-  </script>
+  <!-- 引用外部拆分好的資料與程式庫 -->
+  <script src="data/asanas.js"></script>
+  <script src="data/presets.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
